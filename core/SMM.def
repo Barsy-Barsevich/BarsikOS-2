@@ -1,1 +1,88 @@
-;System Memory Management
+
+;Standart Memory Management (SMM)
+
+;'Standart_arithmetic.asm'
+.def div16_srem =           $FFFF ;byte
+.def div16_squot =          $FFFE ;byte
+.def div16_count =          $FFFD ;byte
+
+;'AFS3.asm'
+.def strcmp_lens1 =         $FFFC ;byte
+.def strcmp_lens2 =         $FFFB ;byte
+.def concat_s1adr =         $FFF9 ;word
+.def concat_s1len =         $FFF8 ;byte
+.def concat_s2len =         $FFF7 ;byte
+.def concat_strgov =        $FFF6 ;byte
+.def pos_string =           $FFF4 ;word
+.def pos_substg =           $FFF2 ;word
+.def pos_slen =             $FFF1 ;byte
+.def pos_sublen =           $FFF0 ;byte
+.def pos_index =            $FFEF ;byte
+
+;'GRLIB_Barsotion.asm'
+.def fastmul_rotate = $05
+.def number_x_pixels =      $FFED ;word
+.def number_y_pixels =      $FFEB ;word
+.def x_sc_right =           $FFE9 ;int
+.def x_sc_left =            $FFE7 ;int
+.def y_sc_upper =           $FFE5 ;int
+.def y_sc_lower =           $FFE3 ;int
+.def num_x_sc_bytes =       $FFE2 ;byte
+.def start_buf_addr =       $FFE0 ;word
+.def font_const =           $FFDE ;word
+.def gap_const =            $FFDD ;byte
+.def vert_sym =             $FFDC ;byte
+.def hor_sym =              $FFDB ;byte
+.def intersection_style =   $FFDA ;byte
+.def x_dot =                $FFD8 ;int
+.def y_dot =                $FFD6 ;int
+.def x_wrsym =              $FFD4 ;int
+.def y_wrsym =              $FFD2 ;int
+.def now_sym =              $FFD1 ;char
+.def x_str =                $FFCF ;int
+.def y_str =                $FFCD ;int
+.def gr_stopt_addr =        $FFCB ;word
+.def gr_stmono_addr =       $FFC9 ;word
+.def gr_stopt_index =       $FFC8 ;byte
+.def gr_stmono_index =      $FFC7 ;byte
+.def x0_line =              $FFC5 ;int
+.def x1_line =              $FFC3 ;int
+.def y0_line =              $FFC1 ;int
+.def y1_line =              $FFBF ;int
+.def x_circle =             $FFBD ;int
+.def y_circle =             $FFBB ;int
+.def radius =               $FFB9 ;int
+.def x0_frame =             $FFB7 ;int
+.def x1_frame =             $FFB5 ;int
+.def y0_frame =             $FFB3 ;int
+.def y1_frame =             $FFB1 ;int
+.def xk =                   $FFAF ;int
+.def vert_count =           $FFAE ;byte
+.def hor_count =            $FFAD ;byte
+.def wrsym_bool_err =       $FFAC ;byte
+.def dx =                   $FFAA ;int
+.def dy =                   $FFA8 ;int
+.def dx_puoli =             $FFA6 ;int
+.def dy_puoli =             $FFA4 ;int
+.def var_err =              $FFA2 ;int
+.def xplus =                $FFA0 ;int
+.def yplus =                $FF9E ;int
+.def x_sector =             $FF9C ;int
+.def y_sector =             $FF9A ;int
+.def x_and_xplus_quar =     $FF98 ;int
+.def y_and_xplus_quar =     $FF96 ;int
+.def sector_ph =            $FF94 ;int
+.def sector_pd =            $FF92 ;int
+.def sector_pv =            $FF90 ;int
+.def r_quar =               $FF8E ;int
+.def x =                    $FF8C ;int
+.def y =                    $FF8A ;int
+.def xl =                   $FF88 ;int
+.def yl =                   $FF86 ;int
+
+;'ST7920_Driver.asm'
+.def DISPLAY_BUFFER_ADDR =  start_buf_addr
+
+;'W25_Driver.asm'
+.def W25_BASE_ADDRESS_CELL = $FF84
+.def W25_Handle_TypeDef =    $FF7E       
