@@ -6,6 +6,7 @@
 ;   0000H - coldstart1st.bin
 ;   0030H - coldstart2nd.bin
 ;   0060H - supervisor.bin
+;   1031H - libraries_F001.bin
 
 .include /home/victor/Desktop/BarsikOS-2/core/systemdef.def
 .include /home/victor/Desktop/BarsikOS-2/core/smm.def
