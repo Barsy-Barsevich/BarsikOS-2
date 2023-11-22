@@ -2,6 +2,7 @@
 
 .include /home/victor/Desktop/BarsikOS-2/core/systemdef.def
 .include /home/victor/Desktop/BarsikOS-2/core/smm.def
+.include /home/victor/Desktop/BarsikOS-2/core/libraries.h
 
 ;Вектор 0 - фатальная ситуация сброса
     .org    $0000
@@ -104,9 +105,8 @@ trap_source_proc:
     dad     sp          ;(HL)=(SP)+11
     mov     a,m         ;(A)-старший байт адреса процесса пользователя
     ani     $F0
-    ;cpi     $F0         ;проверка на сектор 'F'
-    cpi     $00         ;проверка на сектор '0'
-    ;cpi     $20         ;проверка на сектор '2'
+    cpi     $F0         ;проверка на сектор 'F'
+    ;cpi     $00         ;проверка на сектор '0'
     jz      trap_stack_form     ;переход к выполнению системной функции
 ;---<(1ba) Убить процесс>-------------------------------------------------------
     ;Смотрим SYSCELL_STARTPASS (Если не равен 0, то не убиваем. Установ в 0)
@@ -119,7 +119,8 @@ trap_source_proc:
     jnz     trap_source_end     ;переход к стандартному выходу
     ;печать значения 1 на экране
     mvi     a,$31
-    call    7-seg
+    call    ASCSEG7
+    ori     $80
     cma
     out     DISP_PORT
     jmp     trap_source_end     ;переход к стандартному возврату
@@ -257,57 +258,8 @@ SAP_START_ADDR_ROM:
 
 .include    /home/victor/Desktop/BarsikOS-2/core/SYStemFS.asm
 
-
-
-7-seg:
-    call    sthex1
-    lxi     b,STR-7seg
-    add     c
-    mov     c,a
-    ldax    b
-    ret
-STR-7seg:
-    .db     3FH
-    .db     06H
-    .db     5BH
-    .db     4FH
-    .db     66H
-    .db     6DH
-    .db     7DH
-    .db     07H
-    .db     7FH
-    .db     6FH
-    .db     77H
-    .db     7CH
-    .db     58H
-    .db     5EH
-    .db     79H
-    .db     71H
-sthex1:
-    sui     30H
-    cpi     0AH
-    rm
-    sui     07H
-    ret
-shex1:
-    adi     30H
-    cpi     3AH
-    rm
-    adi     07H
-    ret
-Function:
-    call    SYS_OS_muutos
-    lda     $8010
-    ani     $0F
-    call    shex1
-    call    7-seg
-    cma
-    out     DISP_PORT
-    ret
-
-.include /home/victor/Desktop/BarsikOS-2/lib/StandartArithmetic.asm
-.include /home/victor/Desktop/BarsikOS-2/lib/AFS3.asm
-
+;.include /home/victor/Desktop/BarsikOS-2/lib/StandartArithmetic.asm
+;.include /home/victor/Desktop/BarsikOS-2/lib/AFS3.asm
 
 
 process0:
