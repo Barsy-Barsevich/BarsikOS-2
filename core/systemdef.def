@@ -1,0 +1,89 @@
+
+;SystemDef.def
+
+;Системный порт
+.def SYSPORT_A =            $00
+.def SYSPORT_B =            $02
+.def SYSPORT_C =            $01
+.def SYSPORT_INI =          $03
+;Таймер
+.def TIMER_COUNTER_0 =      $08
+.def TIMER_COUNTER_1 =      $09
+.def TIMER_COUNTER_2 =      $0A
+.def TIMER_MODEREG =        $0B
+;Дисплей
+.def DISP_PORT =            $18
+
+;Сигналы управления системного порта (на вывод)
+.def SYS_TURBO_BITMASK =    $01     ;1-переход в турборежим тактирования
+.def SYS_WB_BITMASK =       $02     ;1-запись ассоциаций в СВА, 0-функция отключена
+.def SYS_WB_BITMASK_INV =   $FD
+.def SYS_CLKE_BITMASK =     $04     ;1-разрешение работы таймера 2
+.def SYS_CLKE_BITMASK_INV = $FB
+.def SYS_SY0_BITMASK =      $01
+.def SYS_SY1_BITMASK =      $08
+.def SYS_SY2_BITMASK =      $02
+.def SYS_SY3_BITMASK =      $04
+.def SYS_SY4_BITMASK =      $08
+.def SYS_SY5_BITMASK =      $10
+.def SYS_SY6_BITMASK =      $20
+.def SYS_MS0_BITMASK =      $40
+.def SYS_MS1_BITMASK =      $80
+.def SYS_PT0_BITMASK =      $08
+.def SYS_PT1_BITMASK =      $10
+.def SYS_PT2_BITMASK =      $20
+.def SYS_AU0_BITMASK =      $40
+.def SYS_AU1_BITMASK =      $80
+.def SYS_PS15_BITMASK =     $01
+.def SYS_PS16_BITMASK =     $02
+.def SYS_PS17_BITMASK =     $04
+;Биты на ввод
+.def SYS_REQ_BITMASK =      $10
+.def SYS_Priority_BITMASK = $20
+.def SYS_CONF_BITMASK =     $40
+
+
+;--<System Process Attributes>--------------------------------------------------
+.def SYSPA_ID =         $00
+.def SYSPA_STATUS =     $01
+.def SYSPA_STATUS2 =    $02
+;Table of Assotiations
+.def SYSPA_TA_01 =      $03
+.def SYSPA_TA_23 =      $04
+.def SYSPA_TA_45 =      $05
+.def SYSPA_TA_67 =      $06
+.def SYSPA_TA_89 =      $07
+.def SYSPA_TA_AB =      $08
+.def SYSPA_TA_CD =      $09
+.def SYSPA_TA_EF =      $0A
+;Contains of stack
+.def SYSPA_STACK_HL =   $0B
+.def SYSPA_STACK_DE =   $0D
+.def SYSPA_STACK_BC =   $0F
+.def SYSPA_STACK_PSW =  $11
+;Return address
+.def SYSPA_RETADDR =    $13
+.def SYSPA_L_RETADDR =  $13
+.def SYSPA_H_RETADDR =  $14
+;Name
+.def SYSPA_NAME =       $15
+.def SYSPA_NAME_0 =     $15
+.def SYSPA_NAME_1 =     $16
+.def SYSPA_NAME_2 =     $17
+.def SYSPA_NAME_3 =     $18
+.def SYSPA_NAME_4 =     $19
+.def SYSPA_NAME_5 =     $1A
+.def SYSPA_NAME_6 =     $1B
+.def SYSPA_NAME_7 =     $1C
+
+
+.def SAP_LEN =                  $1D ;29
+.def num_proc =                 $02
+.def temp_proc_cell =           $FFFF
+.def SAP_START_ADDR =           $F001
+;Указатель на структуру атрибутов процесса, который следует отложить (archive)
+.def SYSCELL_PROCTOARCH = $FFFD
+;Указатель на структуру атрибутов процесса, который следует запустить (run)
+.def SYSCELL_PROCTORUN = $FFFB
+;Переменная, открючающая начальное убийство процесса
+.def SYSCELL_STARTPASS = $FFFA
