@@ -79,11 +79,11 @@
 
 .def SAP_LEN =                  $1D ;29
 .def num_proc =                 $02
-.def temp_proc_cell =           $FFFF
-.def SAP_START_ADDR =           $F001
+.def temp_proc_cell =           $FF7D   ;$FFFF
+.def SAP_START_ADDR =           $FF3E   ;$F001
 ;Указатель на структуру атрибутов процесса, который следует отложить (archive)
-.def SYSCELL_PROCTOARCH = $FFFD
+.def SYSCELL_PROCTOARCH =       $FF7B   ;$FFFD
 ;Указатель на структуру атрибутов процесса, который следует запустить (run)
-.def SYSCELL_PROCTORUN = $FFFB
+.def SYSCELL_PROCTORUN =        $FF79   ;$FFFB
 ;Переменная, открючающая начальное убийство процесса
-.def SYSCELL_STARTPASS = $FFFA
+.def SYSCELL_STARTPASS =        $FF78   ;$FFFA
