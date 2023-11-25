@@ -95,6 +95,9 @@ sys_run_proc_1:
 ;(3) Загружаем таблицу ассоциаций для нового процесса
     lhld    SYSCELL_PROCTORUN
     call    SYS_TA_write
+;(4) Загружаем размер кванта времени для нового процесса
+    lhld    SYSCELL_PROCTORUN
+    call    SYS_QuantTime_Set
     ;
     jmp     trap_source_end
 ;---<(1b) Источник прерывания - процесс>----------------------------------------    
@@ -197,7 +200,7 @@ Hot_Start_OS:
 SAP_START_ADDR_ROM:
 ;--<1st process>----------------------------------------------------------------
 .db $00     ;SYSPA_ID =         $00
-.db $00     ;SYSPA_STATUS =     $01
+.db $07     ;SYSPA_STATUS =     $01
 .db $00     ;SYSPA_STATUS2 =    $02
 ;Table of Assotiations
 .db $01     ;SYSPA_TA_01 =      $03
