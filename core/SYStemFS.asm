@@ -1,11 +1,11 @@
 ;SYStemFS - a set of OS functions
 
-
 ; SYS_OS_muutos
 ; SYS_User_muutos
 ; SYS_Clear_Timer_16
 ; SYS_Read_Timer_16
 ; SYS_TA_write
+; SYS_QuantTime_Set
 
 
 ; SYStemFS
@@ -37,10 +37,15 @@ SYS_User_muutos:
 ;Настройка таймера
     mvi     a,B0H
     out     TIMER_MODEREG
-    mvi     a,60H
+    lhld    SYSCELL_QUANT_TIME
+    mov     a,l
     out     TIMER_COUNTER_2
-    mvi     a,EAH
+    mov     a,h
     out     TIMER_COUNTER_2
+;    mvi     a,60H
+;    out     TIMER_COUNTER_2
+;    mvi     a,EAH
+;    out     TIMER_COUNTER_2
 ; Включаем режим пользователя
     mvi     a,40H
     sim
@@ -137,3 +142,34 @@ sys_ta_write_cycle:
     ori     SYS_CLKE_BITMASK
     out     SYSPORT_C
     ret
+
+
+; SYStemFS
+; Функция SYS_QuantTime_Set - установка величины кванта времени
+; Ввод: (HL)-указатель на структуру аттрибутов процесса
+; Вывод: нет
+; Используемые регистры: все
+; Оценка: длина - , время - 
+SYS_QuantTime_Set:
+    ldhi    SYSPA_STATUS
+    ldax    d
+    ani     $07
+    add     a
+    mov     e,a
+    mvi     d,$00
+    lxi     h,sys_quanttime_set_1
+    dad     d
+    xchg
+    lhlx
+    shld    SYSCELL_QUANT_TIME
+    ret
+sys_quanttime_set_1:
+    .dw     $0BB8   ;3000  Приоритет 0 (низший)
+    .dw     $1388   ;5000  Приоритет 1 (фоновый)
+    .dw     $1D4C   ;7500  Приоритет 2 (пользовательский)
+    .dw     $2710   ;10000 Приоритет 3 (пользовательский)
+    .dw     $4E20   ;20000 Приоритет 4 (пользовательский)
+    .dw     $7530   ;30000 Приоритет 5 (пользовательский)
+    .dw     $9C40   ;40000 Приоритет 6 (системный)
+    .dw     $EA60   ;60000 Приоритет 7 (высший)
+    
