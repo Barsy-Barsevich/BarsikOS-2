@@ -2,11 +2,9 @@
 
 ; SYS_OS_muutos
 ; SYS_User_muutos
-; SYS_Clear_Timer_16
-; SYS_Read_Timer_16
+; SYS_Read_Time_Ms
 ; SYS_TA_write
 ; SYS_QuantTime_Set
-
 
 ; SYStemFS
 ; Функция SYS_OS_muutos - переход в режим ОС
@@ -42,10 +40,6 @@ SYS_User_muutos:
     out     TIMER_COUNTER_2
     mov     a,h
     out     TIMER_COUNTER_2
-;    mvi     a,60H
-;    out     TIMER_COUNTER_2
-;    mvi     a,EAH
-;    out     TIMER_COUNTER_2
 ; Включаем режим пользователя
     mvi     a,40H
     sim
@@ -58,49 +52,22 @@ SYS_User_muutos:
     ret
 
 ; SYStemFS
-; Функция SYS_Clear_Time_16 - сброс системного времени
+; Функция SYS_Read_Time_Ms - чтение системного времени (в микросекундах)
 ; Ввод: нет
-; Вывод: нет
-; Используемые регистры: A
-; Используемые порты: таймер номер 1
-; Оценка: длина - 9 байт, время - 51 такт
-SYS_Clear_Time_16:
-    mvi     a,70H
-    out     TIMER_MODEREG
-    xra     a
-    out     TIMER_COUNTER_1
-    out     TIMER_COUNTER_1
-    ret
-
-; SYStemFS
-; Функция SYS_Read_Time_16 - чтение значения системного времени (в тиках)
-; Ввод: нет
-; Вывод: (HL) - время в тиках таймера
+; Вывод: (HL) - время в микросекундах
 ; Используемые регистры: AF,HL
-; Оценка: длина - 21 байт, время - 89-90 тактов
-SYS_Read_Time_16:
-    in      TIMER_COUNTER_1  ;чтение LSB
-    mov     l,a
-    in      TIMER_COUNTER_1  ;чтение MSB
-    mov     h,a
-;Область переполнения (256-(14/tps)), tps = делитель таймера
-    mvi     a,$DF   ;Микрон-2: tps = 1
-;    mvi     a,$FD   ;Laulaja-4 standart: tps = 5
-;    mvi     a,$FF   ;Laulaja-4 turbomode: tps = 10
-    sub     l
-    jnc     sys_read_time_16_1
-    dcr     h
-sys_read_time_16_1:
-;(HL)-systime*(-1). Необходимо дополнить
-    mov     a,l
+; Оценка: длина - байт, время -  тактов
+SYS_Read_Time_Ms:
+;Send code to latch counting
+    mvi     a,$00
+    out     TIMER_MODEREG
+    in      TIMER_COUNTER_0
     cma
     mov     l,a
-    mov     a,h
+    in      TIMER_COUNTER_0
     cma
     mov     h,a
-    inx     h
     ret
-
 
 ; SYStemFS
 ; Функция SYS_TA_write - запись таблицы ассоциаций из аттрибутов процесса
@@ -109,6 +76,22 @@ sys_read_time_16_1:
 ; Используемые регистры: все
 ; Оценка: длина - , время - 
 SYS_TA_write:
+    push    h
+;Сохранение значений ячеек по адресам X000H
+    lxi     h,$0000
+    lxi     d,SYSCELL_WB_MEMORY_SAVE
+    mvi     c,$10
+sys_ta_write_1:
+    mov     a,m
+    stax    d
+    inx     d
+    mvi     a,$10
+    add     h
+    mov     h,a
+    dcr     c
+    jnz     sys_ta_write_1
+    pop     h
+;Запись в банк
     in      SYSPORT_C
     ori     SYS_WB_BITMASK
     out     SYSPORT_C
@@ -137,12 +120,25 @@ sys_ta_write_cycle:
     inx     d
     dcr     c
     jnz     sys_ta_write_cycle
+;Выключение режима записи в банк
     in      SYSPORT_C
     ani     SYS_WB_BITMASK_INV
     ori     SYS_CLKE_BITMASK
     out     SYSPORT_C
+;Выгрузка сохраненных значений ячеек помяти по адресам X000H
+    lxi     h,$0000
+    lxi     d,SYSCELL_WB_MEMORY_SAVE
+    mvi     c,$10
+sys_ta_write_2:
+    ldax    d
+    mov     m,a
+    inx     d
+    mvi     a,$10
+    add     h
+    mov     h,a
+    dcr     c
+    jnz     sys_ta_write_2
     ret
-
 
 ; SYStemFS
 ; Функция SYS_QuantTime_Set - установка величины кванта времени
@@ -172,4 +168,3 @@ sys_quanttime_set_1:
     .dw     $7530   ;30000 Приоритет 5 (пользовательский)
     .dw     $9C40   ;40000 Приоритет 6 (системный)
     .dw     $EA60   ;60000 Приоритет 7 (высший)
-    
