@@ -1,35 +1,51 @@
 
-
-
-.def SUB16 =        $F016
-.def MUL16 =        $F01D
-.def UDIV16 =       $F074
-.def SDIV16 =       $F037
-.def CMP16 =        $F0B5
-.def ABS =          $F0D9
-.def DOPHL =        $F0E3
-.def DOPBC =        $F0EB
-.def DOPDE =        $F0F3
+.def SUB16 =                $F00D
+.def MUL16 =                $F010
+.def UDIV16 =               $F016
+.def SDIV16 =               $F013
+.def CMP16 =                $F019
+.def ABS =                  $F01C
+.def DOPHL =                $F01F
+.def DOPBC =                $F022
+.def DOPDE =                $F025
+;   
+.def BITSET =               $F028
+.def BITCLR =               $F02B
+.def BITTST =               $F02E
+.def MFILL =                $F031
+.def COPCOUNT =             $F034
+.def SYM_IS_DEC =           $F037
+.def SYM_IS_HEX =           $F03A
+.def BCDASC =               $F040
+.def ASCBCD =               $F03D
+.def BCDSEG7 =              $F046
+.def ASCSEG7 =              $F043
+.def BN2HEX =               $F049
+.def HEX2BN =               $F04C
+.def LOWER =                $F04F
+.def HIGHER =               $F052
+.def STRCOP =               $F055
+.def STRCMP =               $F058
+.def CONCAT =               $F05B
+.def POS =                  $F05E
 ;
-.def BITSET =       $F0FB
-.def BITCLR =       $F10F
-.def BITTST =       $F123
-.def MFILL =        $F12F
-.def COPCOUNT =     $F139
-.def SYM_IS_DEC =   $F148
-.def SYM_IS_HEX =   $F14F
-.def BCDASC =       $F167
-.def ASCBCD =       $F15A
-.def BCDSEG7 =      $F17A
-.def ASCSEG7 =      $F171
-.def BN2HEX =       $F193
-.def HEX2BN =       $F1B0
-.def LOWER =        $F1C7
-.def HIGHER =       $F1D0
-.def STRCOP =       $F1D9
-.def STRCMP =       $F1E5
-.def CONCAT =       $F209
-.def POS =          $F262
+.def Function =             $F061
+.def Delay_ms_6 =           $F064
+.def Read_Time =            $F067
 ;
-.def Function =     $F2B0
-.def Delay_ms_6 =   $F2BF
+.def ST7920_INI =           $F06A
+.def ST7920_PRINT_BUF =     $F06D
+.def ST7920_BUF_CLR =       $F070
+;
+.def SPI_EX =               $F073
+;
+.def W25_SET_BASE_ADDRESS = $F076
+.def W25_SET_SS_BIT =       $F079
+.def W25_SS_DOWN =          $F07C
+.def W25_SS_UP =            $F07F
+.def W25_READ_ID =          $F082
+.def W25_SECTOR_WRITE =     $F085
+.def W25_SECTOR_READ =      $F088
+.def W25_SECTOR_ERASE =     $F08B
+;
+.def W25_Test =             $F08E
