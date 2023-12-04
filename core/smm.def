@@ -1,11 +1,10 @@
-
 ;Standart Memory Management (SMM)
-
+;
 ;'Standart_arithmetic.asm'
 .def div16_srem =           $FFFF ;byte
 .def div16_squot =          $FFFE ;byte
 .def div16_count =          $FFFD ;byte
-
+;
 ;'AFS3.asm'
 .def strcmp_lens1 =         $FFFC ;byte
 .def strcmp_lens2 =         $FFFB ;byte
@@ -18,7 +17,7 @@
 .def pos_slen =             $FFF1 ;byte
 .def pos_sublen =           $FFF0 ;byte
 .def pos_index =            $FFEF ;byte
-
+;
 ;'GRLIB_Barsotion.asm'
 .def fastmul_rotate = $05
 .def number_x_pixels =      $FFED ;word
@@ -79,10 +78,10 @@
 .def y =                    $FF8A ;int
 .def xl =                   $FF88 ;int
 .def yl =                   $FF86 ;int
-
+;
 ;'ST7920_Driver.asm'
 .def DISPLAY_BUFFER_ADDR =  start_buf_addr
-
+;
 ;'W25_Driver.asm'
 .def W25_BASE_ADDRESS_CELL = $FF84
 .def W25_Handle_TypeDef =    $FF7E       
