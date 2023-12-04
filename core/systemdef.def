@@ -1,20 +1,32 @@
-
 ;SystemDef.def
-
+;
+;----<Системные>----------------------------------------------------------------
 ;Системный порт
-.def SYSPORT_A =            $00
-.def SYSPORT_B =            $02
-.def SYSPORT_C =            $01
-.def SYSPORT_INI =          $03
+.def SYSPORT_A =            $80
+.def SYSPORT_B =            $82
+.def SYSPORT_C =            $81
+.def SYSPORT_INI =          $83
 ;Таймер
-.def TIMER_COUNTER_0 =      $08
-.def TIMER_COUNTER_1 =      $09
-.def TIMER_COUNTER_2 =      $0A
-.def TIMER_MODEREG =        $0B
+.def TIMER_COUNTER_0 =      $88
+.def TIMER_COUNTER_1 =      $89
+.def TIMER_COUNTER_2 =      $8A
+.def TIMER_MODEREG =        $8B
 ;Дисплей
-.def DISP_PORT =            $18
-
-;Сигналы управления системного порта (на вывод)
+.def DISP_PORT =            $98
+;----<Внешний порт>-------------------------------------------------------------
+.def EXTPORT_A =            $00
+.def EXTPORT_B =            $02
+.def EXTPORT_C =            $01
+.def EXTPORT_INI =          $03
+.def SSPI_PORT =            EXTPORT_C
+;----<Внешние устройства>-------------------------------------------------------
+;Дисплей ST7920
+.def DISP_A_PORT =          EXTPORT_A
+.def DISP_B_PORT =          EXTPORT_B
+;Диск W25
+.def DISK_SS_PORT =         SSPI_PORT
+;
+;----<Сигналы управления системного порта (на вывод)>---------------------------
 .def SYS_TURBO_BITMASK =    $01     ;1-переход в турборежим тактирования
 .def SYS_WB_BITMASK =       $02     ;1-запись ассоциаций в СВА, 0-функция отключена
 .def SYS_WB_BITMASK_INV =   $FD
@@ -41,8 +53,7 @@
 .def SYS_REQ_BITMASK =      $10
 .def SYS_Priority_BITMASK = $20
 .def SYS_CONF_BITMASK =     $40
-
-
+;
 ;--<System Process Attributes>--------------------------------------------------
 .def SYSPA_ID =         $00
 .def SYSPA_STATUS =     $01
@@ -75,15 +86,14 @@
 .def SYSPA_NAME_5 =     $1A
 .def SYSPA_NAME_6 =     $1B
 .def SYSPA_NAME_7 =     $1C
-
-
+;
 ;Константа, обозначающая длину 1 структуры атрибутов процесса (САП)
 .def SAP_LEN =                  $1D ;29
 ;Константа, обозначающая число процессов в системе
 .def num_proc =                 $02
-
+;
 .def CLT_Ticks_Per_Ms =         $0258   ;600
-
+;
 ;Переменная, номер текущего процесса
 .def temp_proc_cell =           $FF7D
 ;Указатель на начало очереди процессов
