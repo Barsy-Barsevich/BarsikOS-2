@@ -226,6 +226,12 @@ Hot_Start_OS:
     out     TIMER_COUNTER_0
     mvi     a,$00
     out     TIMER_COUNTER_0
+;Инициализация внешнего порта
+    mvi     a,$88
+    out     EXTPORT_INI
+;Устанавливаем начальное значение дисплея
+    mvi     a,$55
+    out     DISP_PORT
 ;Копируем заголовки процессов
     lxi     b,$003A
     lxi     d,SAP_START_ADDR_ROM
@@ -322,7 +328,8 @@ process0:
     ;call    Function
     ;lxi     h,$01F4
     ;call    Delay_ms_6
-    call    Read_Time
+    ;call    Read_Time
+    call    W25_Test
     jmp     process0
 
 process1:
