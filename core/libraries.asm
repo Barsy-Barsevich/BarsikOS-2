@@ -221,16 +221,63 @@ W25_Test:
 ;    call    Delay_ms_6
 ;    jmp     metka_c
 
-    lxi     h,$0001 ;сектор номер 1
-    push    h
-    lxi     h,$0000 ;буфер начиная с адреса $0000
-    push    h
-    call    W25_SECTOR_WRITE
-    lxi     h,$0005
+;    lxi     h,$0000
+;    push    h
+;    call    W25_SECTOR_ERASE
+;    lxi     h,$0000 ;сектор номер 0
+;    push    h
+;    lxi     h,$0000 ;буфер начиная с адреса $0000
+;    push    h
+;    call    W25_SECTOR_WRITE
+    
+;Стирание кластера 0 диска
+    lxi     h,$0000
     push    h
     call    W25_SECTOR_ERASE
+;Стирание кластера 1 диска
+    lxi     h,$0001
+    push    h
+    call    W25_SECTOR_ERASE
+;Заполнение сектора А ОЗУ значением $00
+    lxi     h,$A000
+    lxi     d,$1000
+    xra     a
+    call    MFILL    
+;Запись блока F ОЗУ в кластер 0 диска
+    lxi     h,$0000
+    push    h
+    lxi     h,$F000
+    push    h
+    call    W25_SECTOR_WRITE
+;Чтение кластера 0 диска в сектор A ОЗУ
+    lxi     h,$0000
+    push    h
+    lxi     h,$A000
+    push    h
+    call    W25_SECTOR_READ
+;Запись сектора A ОЗУ в кластер 1 диска
+    lxi     h,$0001
+    push    h
+    lxi     h,$A000
+    push    h
+    call    W25_SECTOR_WRITE
+;Стереть кластер 0 диска
+    lxi     h,$0000
+    push    h
+    call    W25_SECTOR_ERASE
+;Запись сектора 0 ОЗУ в кластер 0 диска
+    lxi     h,$0000
+    push    h
+    lxi     h,$0000
+    push    h
+    call    W25_SECTOR_WRITE
+
+;Чтение ID
     call    W25_READ_ID
     pop     h
     mov     a,h
     out     DISP_PORT
+;Задержка
+    lxi     h,$1000
+    call    Delay_ms_6
     ret
