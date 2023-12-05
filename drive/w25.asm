@@ -1,4 +1,4 @@
-; (E) Barsotion KY 12.07.2023 (тест Erase & Write 04.12.2023
+; (E) Barsotion KY 12.07.2023
 ; Драйвер ЭСППЗУ типов W25Q32, W25Q64, W25Q128
 ;
 ; W25_SET_BASE_ADDRESS (ADDR) ------------ Установка базового адреса переменных
@@ -44,11 +44,11 @@
 .def W25_Read_Data =                $03
 .def W25_Fast_Read =                $0B
 ;Внутренние переменные
-.def W25LIB_UI8VAR1_CELL =          $00 ;$01
-.def W25LIB_UI8VAR2_CELL =          $01 ;$02
-.def W25LIB_UI8VAR3_CELL =          $02 ;$03
-.def W25LIB_UI16VAR_CELL =          $03 ;$04
-.def W25_SS_PIN_CELL =              $05 ;$06 ;номер пина SS микросхемы
+.def W25LIB_UI8VAR1_CELL =          $00
+.def W25LIB_UI8VAR2_CELL =          $01
+.def W25LIB_UI8VAR3_CELL =          $02
+.def W25LIB_UI16VAR_CELL =          $03
+.def W25_SS_PIN_CELL =              $05 ;номер пина SS микросхемы
 
 
 ; Функция W25_SET_BASE_ADDRESS - установка базового адреса для локальных
@@ -341,7 +341,6 @@ W25_SECTOR_READ:
     lhld    W25_BASE_ADDRESS_CELL
     ldhi    W25LIB_UI8VAR3_CELL 
     stax    d
-sector_read_cycle2:
 ;Отправка команды чтения сектора
     call    W25_SS_DOWN
     mvi     a,W25_Read_Data
@@ -361,37 +360,20 @@ sector_read_cycle2:
     ldhi    W25LIB_UI8VAR3_CELL 
     ldax    d
     call    SPI_EX
-;Чтение 256 байт
+;Чтение 4096 байт
     lhld    W25_BASE_ADDRESS_CELL  ;HL - адрес буфера
     ldhi    W25LIB_UI16VAR_CELL
     lhlx
-    mvi     d,$00
+    lxi     d,$0FFF  ;4096-1 for jnx5
 sector_read_cycle1:
     mvi     a,$FF
     call    SPI_EX
     mov     m,a
     inx     h
-    dcr     d
-    jnz     sector_read_cycle1
-;сохранить адрес буфера в локальную память
-    ; shld W25LIB_UI16VAR_CELL
-    push    h
-    lhld    W25_BASE_ADDRESS_CELL
-    ldhi    W25LIB_UI16VAR_CELL
-    pop     h
-    shlx
+    dcx     d
+    jnx5    sector_read_cycle1
 ;окончание команды записи
     call    W25_SS_UP
-;Добавление $100 к адресу сектора
-    ;lda     W25LIB_UI8VAR2_CELL
-    lhld    W25_BASE_ADDRESS_CELL
-    ldhi    W25LIB_UI8VAR2_CELL 
-    ldax    d
-    inr     a
-    ;sta     W25LIB_UI8VAR2_CELL
-    stax    d
-    ani     $0F
-    jnz     sector_write_cycle2
     ret
 
 ; Функция W25_SECTOR_ERASE - стирание 4кБ-сектора
