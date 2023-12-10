@@ -83,6 +83,7 @@ SYS_OS_muutos:
 .include /home/victor/Desktop/BarsikOS-2/lib/AFS3.asm
 .include /home/victor/Desktop/BarsikOS-2/drive/ST7920_drive.asm
 .include /home/victor/Desktop/BarsikOS-2/drive/w25.asm
+.include /home/victor/Desktop/BarsikOS-2/drive/fat_main.asm
 
 ; (E)  Barsotion KY;
 ; Стандартный SPI обмен v1.2 (проверено 11.07.23)
@@ -193,6 +194,35 @@ Read_Time:
     cma
     out     DISP_PORT
     ret
+    
+;(A) - input
+SendData:
+    mov     b,a
+    ani     $0F
+    out     EXTPORT_B
+    adi     $80
+    out     EXTPORT_B
+    sui     $80
+    out     EXTPORT_B
+    lxi     h,$0010
+    call    Delay_ms_6
+    mov     a,b
+    ani     $F0
+    rrc
+    rrc
+    rrc
+    rrc
+    out     EXTPORT_B
+    adi     $80
+    out     EXTPORT_B
+    sui     $80
+    out     EXTPORT_B
+    lxi     h,$0010
+    call    Delay_ms_6
+    xra     a
+    out     EXTPORT_B
+    ret
+
 
 W25_Test:
     call    SYS_OS_muutos
@@ -202,82 +232,57 @@ W25_Test:
     mvi     a,$04
     push    psw
     call    W25_SET_SS_BIT
-;Signal
-
-;;(2)Тест подключения диска по Manufacturer ID
-;    call    W25_READ_ID
-;    pop     h
-;    mov     a,h
-;    out     DISP_PORT
-;    ret
-
-;;(1)Тест вывода SS
-;metka_c:
-;    call    W25_SS_UP
-;    lxi     h,$01F4
-;    call    Delay_ms_6
-;    call    W25_SS_DOWN
-;    lxi     h,$01F4
-;    call    Delay_ms_6
-;    jmp     metka_c
-
-;    lxi     h,$0000
-;    push    h
-;    call    W25_SECTOR_ERASE
-;    lxi     h,$0000 ;сектор номер 0
-;    push    h
-;    lxi     h,$0000 ;буфер начиная с адреса $0000
-;    push    h
-;    call    W25_SECTOR_WRITE
-    
-;Стирание кластера 0 диска
-    lxi     h,$0000
-    push    h
-    call    W25_SECTOR_ERASE
-;Стирание кластера 1 диска
-    lxi     h,$0001
-    push    h
-    call    W25_SECTOR_ERASE
-;Заполнение сектора А ОЗУ значением $00
     lxi     h,$A000
-    lxi     d,$1000
-    xra     a
-    call    MFILL    
-;Запись блока F ОЗУ в кластер 0 диска
-    lxi     h,$0000
-    push    h
-    lxi     h,$F000
-    push    h
-    call    W25_SECTOR_WRITE
-;Чтение кластера 0 диска в сектор A ОЗУ
-    lxi     h,$0000
-    push    h
-    lxi     h,$A000
-    push    h
-    call    W25_SECTOR_READ
-;Запись сектора A ОЗУ в кластер 1 диска
-    lxi     h,$0001
-    push    h
-    lxi     h,$A000
-    push    h
-    call    W25_SECTOR_WRITE
-;Стереть кластер 0 диска
-    lxi     h,$0000
-    push    h
-    call    W25_SECTOR_ERASE
-;Запись сектора 0 ОЗУ в кластер 0 диска
-    lxi     h,$0000
-    push    h
-    lxi     h,$0000
-    push    h
-    call    W25_SECTOR_WRITE
+    shld    SYSCELL_DISKBUF_ADDR
 
-;Чтение ID
     call    W25_READ_ID
     pop     h
     mov     a,h
     out     DISP_PORT
+;Загрузка адреса строки
+    lxi     h,String_Name
+    push    h
+;Номер начального кластера директории, в которой ведем поиск
+    lxi     h,$0002
+    push    h
+    call    FAT_FIND_BY_NAME
+;Выгружаем номер первого кластера найденного файла/субдиректории
+    pop     h
+    mov     a,l
+    call    BCDSEG7
+    cma
+    out     DISP_PORT
+
+;Чтение ID
+;    call    W25_READ_ID
+;    pop     h
+;    mov     a,h
+;    out     DISP_PORT
+;    mvi     a,$41
+;    call    SendData
+;    mvi     a,$42
+;    call    SendData
+;    mvi     a,$43
+;    call    SendData
+;    mvi     a,$0A
+;    call    SendData
+    
 ;Задержка
-    lxi     h,$1000
+    lxi     h,$A000
     call    Delay_ms_6
     ret
+
+String_Name:
+;.db $08
+;.ds 'SYSTEM'
+;.db $20
+;.db $20
+
+;.db $08
+;.ds 'NEXTFILE'
+
+.db $08
+.ds 'DUMMI'
+.db $20
+.db $20
+.db $20
