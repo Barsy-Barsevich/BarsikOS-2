@@ -4,8 +4,12 @@
 .include /home/victor/Desktop/BarsikOS-2/core/smm.def
 .include /home/victor/Desktop/BarsikOS-2/core/libraries.h
 
-;Вектор 0 - фатальная ситуация сброса
+;Вектор $0000 - фатальная ошибка
     .org    $0000
+    jmp     FATAL_ERROR_HANDLER
+;Вектор $0003 - ошибка диска
+    .org    $0003
+    jmp     DISK_ERROR_HANDLER
 
 
 ;Вектор 21H - Горячий старт ОС
@@ -68,6 +72,7 @@ arch_run_1:
 ; [PSW]
 ; [USER]
 ;(1) Откладываем текущий процесс
+;(загружаем в САП содержимое регистрового набора и адрес возврата)
     lhld    SYSCELL_PROCTOARCH
 ;(HL)-указатель на структуру аттрибутов процесса
     ldhi    SYSPA_STACK_HL
@@ -81,9 +86,19 @@ sys_archive_proc_1:
     inx     h
     dcr     c
     jnz     sys_archive_proc_1
-;(2) Подготавливаем стек под новый процесс
-    lhld    SYSCELL_PROCTORUN
-;(HL)-указатель на структуру аттрибутов процесса
+;(2) Загружаем в САП содержимое регистра SP
+    lhld    SYSCELL_PROCTOARCH      ;HL-указатель на САП
+    ldhi    SYSPA_SP_REG
+    lxi     h,$0000                 ;HL <- SP
+    dad     sp
+    shlx
+;(3) Выгружаем из САП содержимое регистра SP
+    lhld    SYSCELL_PROCTORUN       ;HL-указатель на САП
+    ldhi    SYSPA_SP_REG
+    lhlx
+    sphl
+;(4) Подготавливаем стек под новый процесс
+    lhld    SYSCELL_PROCTORUN       ;HL-указатель на САП
     ldhi    SYSPA_H_RETADDR
     xchg
     mvi     c,$05
@@ -95,13 +110,13 @@ sys_run_proc_1:
     push    d   ;[USER],[PSW],[BC],[DE],[HL]
     dcr     c
     jnz     sys_run_proc_1
-;(3) Загружаем таблицу ассоциаций для нового процесса
+;(5) Загружаем таблицу ассоциаций для нового процесса
     lhld    SYSCELL_PROCTORUN
     call    SYS_TA_write
-;(4) Загружаем размер кванта времени для нового процесса
+;(6) Загружаем размер кванта времени для нового процесса
     lhld    SYSCELL_PROCTORUN
     call    SYS_QuantTime_Set
-;(5) Фиксируем текущее машинное время в микросекундах
+;(7) Фиксируем текущее машинное время в микросекундах
     call    SYS_Read_Time_Ms
     shld    SYSCELL_TIME_PROC_MARK
     ;
@@ -202,8 +217,8 @@ TRAP_source_end:
 ;---<Подпрограмма "Горячий старт ОС">-------------------------------------------
 Hot_Start_OS:
 ;CLKE и Турборежим
-    mvi     a,SYS_CLKE_BITMASK
-    ;mvi     a,$05   ;SYS_CLKE_BITMASK | SYS_TURBO_BITMASK
+    ;mvi     a,SYS_CLKE_BITMASK
+    mvi     a,$05   ;SYS_CLKE_BITMASK | SYS_TURBO_BITMASK
     out     SYSPORT_C
 ;Начальный процесс - 0
     mvi     a,$00
@@ -274,9 +289,9 @@ SAP_START_ADDR_ROM:
 .dw $0000   ;SYSPA_STACK_PSW =  $11
 ;Return address
 .dw process0   ;SYSPA_RETADDR =    $13
-;Name
-.db $00     ;SYSPA_NAME_0 =     $15
-.db $00     ;SYSPA_NAME_1 =     $16
+;Stack Pointer value
+.dw $1FFF
+;Name (Зарезервированные 6 байт)
 .db $00     ;SYSPA_NAME_2 =     $17
 .db $00     ;SYSPA_NAME_3 =     $18
 .db $00     ;SYSPA_NAME_4 =     $19
@@ -303,9 +318,9 @@ SAP_START_ADDR_ROM:
 .dw $0000   ;SYSPA_STACK_PSW =  $11
 ;Return address
 .dw process1   ;SYSPA_RETADDR =    $13
-;Name
-.db $00     ;SYSPA_NAME_0 =     $15
-.db $00     ;SYSPA_NAME_1 =     $16
+;Stack Pointer value
+.dw $2FFF
+;Name (Зарезервированные 6 байт)
 .db $00     ;SYSPA_NAME_2 =     $17
 .db $00     ;SYSPA_NAME_3 =     $18
 .db $00     ;SYSPA_NAME_4 =     $19
@@ -314,8 +329,11 @@ SAP_START_ADDR_ROM:
 .db $00     ;SYSPA_NAME_7 =     $1C
 ;-------------------------------------------------------------------------------
 
-
+;Библиотека системных функций
 .include    /home/victor/Desktop/BarsikOS-2/core/SYStemFS.asm
+
+;Обработчики программных прерываний
+.include    /home/victor/Desktop/BarsikOS-2/core/errorh.asm
 
 ;.include /home/victor/Desktop/BarsikOS-2/lib/StandartArithmetic.asm
 ;.include /home/victor/Desktop/BarsikOS-2/lib/AFS3.asm
