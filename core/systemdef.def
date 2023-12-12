@@ -1,6 +1,8 @@
 ;SystemDef.def
-;
-;----<Системные>----------------------------------------------------------------
+
+;===============================================================================
+;----<Системные Порты>----------------------------------------------------------
+;===============================================================================
 ;Системный порт
 .def SYSPORT_A =            $80
 .def SYSPORT_B =            $82
@@ -13,20 +15,32 @@
 .def TIMER_MODEREG =        $8B
 ;Дисплей
 .def DISP_PORT =            $98
+;===============================================================================
 ;----<Внешний порт>-------------------------------------------------------------
+;===============================================================================
 .def EXTPORT_A =            $00
 .def EXTPORT_B =            $02
 .def EXTPORT_C =            $01
 .def EXTPORT_INI =          $03
 .def SSPI_PORT =            EXTPORT_C
+;===============================================================================
 ;----<Внешние устройства>-------------------------------------------------------
+;===============================================================================
 ;Дисплей ST7920
 .def DISP_A_PORT =          EXTPORT_A
 .def DISP_B_PORT =          EXTPORT_B
 ;Диск W25
 .def DISK_SS_PORT =         SSPI_PORT
-;
+
+;===============================================================================
+;----<Векторы программных прерываний>-------------------------------------------
+;===============================================================================
+.def FATAL_ERROR_VECT =     $0000
+.def DISK_ERROR_VECT =      $0003
+
+;===============================================================================
 ;----<Сигналы управления системного порта (на вывод)>---------------------------
+;===============================================================================
 .def SYS_TURBO_BITMASK =    $01     ;1-переход в турборежим тактирования
 .def SYS_WB_BITMASK =       $02     ;1-запись ассоциаций в СВА, 0-функция отключена
 .def SYS_WB_BITMASK_INV =   $FD
@@ -53,60 +67,47 @@
 .def SYS_REQ_BITMASK =      $10
 .def SYS_Priority_BITMASK = $20
 .def SYS_CONF_BITMASK =     $40
-;
-;--<System Process Attributes>--------------------------------------------------
-.def SYSPA_ID =         $00
-.def SYSPA_STATUS =     $01
-.def SYSPA_STATUS2 =    $02
+
+;===============================================================================
+;--<Смещения таблицы атрибутов процесса (ТАП)>----------------------------------
+;===============================================================================
+.def SYSPA_ID =             $00
+.def SYSPA_STATUS =         $01
+.def SYSPA_STATUS2 =        $02
 ;Table of Assotiations
-.def SYSPA_TA_01 =      $03
-.def SYSPA_TA_23 =      $04
-.def SYSPA_TA_45 =      $05
-.def SYSPA_TA_67 =      $06
-.def SYSPA_TA_89 =      $07
-.def SYSPA_TA_AB =      $08
-.def SYSPA_TA_CD =      $09
-.def SYSPA_TA_EF =      $0A
+.def SYSPA_TA_01 =          $03
+.def SYSPA_TA_23 =          $04
+.def SYSPA_TA_45 =          $05
+.def SYSPA_TA_67 =          $06
+.def SYSPA_TA_89 =          $07
+.def SYSPA_TA_AB =          $08
+.def SYSPA_TA_CD =          $09
+.def SYSPA_TA_EF =          $0A
 ;Contains of stack
-.def SYSPA_STACK_HL =   $0B
-.def SYSPA_STACK_DE =   $0D
-.def SYSPA_STACK_BC =   $0F
-.def SYSPA_STACK_PSW =  $11
+.def SYSPA_STACK_HL =       $0B
+.def SYSPA_STACK_DE =       $0D
+.def SYSPA_STACK_BC =       $0F
+.def SYSPA_STACK_PSW =      $11
 ;Return address
-.def SYSPA_RETADDR =    $13
-.def SYSPA_L_RETADDR =  $13
-.def SYSPA_H_RETADDR =  $14
+.def SYSPA_RETADDR =        $13
+.def SYSPA_L_RETADDR =      $13
+.def SYSPA_H_RETADDR =      $14
+;Contains of SP register
+.def SYSPA_SP_REG =         $15
+.def SYSPA_SP_REG_L =       $15
+.def SYSPA_SP_REG_H =       $16
 ;Name
-.def SYSPA_NAME =       $15
-.def SYSPA_NAME_0 =     $15
-.def SYSPA_NAME_1 =     $16
-.def SYSPA_NAME_2 =     $17
-.def SYSPA_NAME_3 =     $18
-.def SYSPA_NAME_4 =     $19
-.def SYSPA_NAME_5 =     $1A
-.def SYSPA_NAME_6 =     $1B
-.def SYSPA_NAME_7 =     $1C
+.def SYSPA_NAME =           $17
+.def SYSPA_NAME_2 =         $17
+.def SYSPA_NAME_3 =         $18
+.def SYSPA_NAME_4 =         $19
+.def SYSPA_NAME_5 =         $1A
+.def SYSPA_NAME_6 =         $1B
+.def SYSPA_NAME_7 =         $1C
 ;
 ;Константа, обозначающая длину 1 структуры атрибутов процесса (САП)
-.def SAP_LEN =                  $1D ;29
+.def SAP_LEN =              $1D     ;29
 ;Константа, обозначающая число процессов в системе
-.def num_proc =                 $02
+.def num_proc =             $02
 ;
-.def CLT_Ticks_Per_Ms =         $0258   ;600
-;
-;Переменная, номер текущего процесса
-.def temp_proc_cell =           $FF7D
-;Указатель на начало очереди процессов
-.def SAP_START_ADDR =           $FF3E   ;29+29 bytes
-;Указатель на структуру атрибутов процесса, который следует отложить (archive)
-.def SYSCELL_PROCTOARCH =       $FF7B   ;word
-;Указатель на структуру атрибутов процесса, который следует запустить (run)
-.def SYSCELL_PROCTORUN =        $FF79   ;word
-;Переменная, открючающая начальное убийство процесса
-.def SYSCELL_STARTPASS =        $FF78   ;byte
-;Переменная для хранения величины кванта времени текущего процесса
-.def SYSCELL_QUANT_TIME =       $FF3C   ;word
-;Массив из 16 байт для хранения содержимых ячеек памяти по адресам X000H во время записи таблицы ассоциаций в MMU
-.def SYSCELL_WB_MEMORY_SAVE =   $FF2C   ;16 bytes
-;Время запуска процесса (в мс). После вызова системной функции используется для проверки, не привышен ли квант времени. Если привышен, переход к Диспетчеру задач
-.def SYSCELL_TIME_PROC_MARK =   $FF2A   ;word
+.def CLT_Ticks_Per_Ms =     $0258   ;600
