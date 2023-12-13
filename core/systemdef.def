@@ -69,11 +69,11 @@
 .def SYS_CONF_BITMASK =     $40
 
 ;===============================================================================
-;--<Смещения таблицы атрибутов процесса (ТАП)>----------------------------------
+;--<Смещения структуры атрибутов процесса (CАП)>--------------------------------
 ;===============================================================================
 .def SYSPA_ID =             $00
-.def SYSPA_STATUS =         $01
-.def SYSPA_STATUS2 =        $02
+.def SYSPA_STATUS_0 =       $01
+.def SYSPA_STATUS_1 =       $02
 ;Table of Assotiations
 .def SYSPA_TA_01 =          $03
 .def SYSPA_TA_23 =          $04
@@ -96,14 +96,30 @@
 .def SYSPA_SP_REG =         $15
 .def SYSPA_SP_REG_L =       $15
 .def SYSPA_SP_REG_H =       $16
-;Name
-.def SYSPA_NAME =           $17
-.def SYSPA_NAME_2 =         $17
-.def SYSPA_NAME_3 =         $18
-.def SYSPA_NAME_4 =         $19
-.def SYSPA_NAME_5 =         $1A
-.def SYSPA_NAME_6 =         $1B
-.def SYSPA_NAME_7 =         $1C
+;Reserved
+.def SYSPA_RES_0 =          $17
+.def SYSPA_RES_1 =          $18
+.def SYSPA_RES_2 =          $19
+.def SYSPA_RES_3 =          $1A
+.def SYSPA_RES_4 =          $1B
+.def SYSPA_RES_5 =          $1C
+.def SYSPA_RES_6 =          $1D
+.def SYSPA_RES_7 =          $1E
+.def SYSPA_RES_8 =          $1F
+;===============================================================================
+;--<Биты статуса процесса>------------------------------------------------------
+;===============================================================================
+;Маски байта SYSPA_STATUS_0
+.def SYSPA_STATUS_STATUS_MASK =     $C0
+.def SYSPA_STATUS_PRIORITY_MASK =   $07
+.def SYSPA_STATUS_WAITED_MASK =     $20
+;Состояние процесса
+.def SYSPA_PROC_LAUNCHED =          $00 ;процесс запущен и выполняется
+.def SYSPA_PROC_STOPPED =           $40 ;остановлен до освобождения критического ресурса
+.def SYSPA_PROC_WAITING =           $80 ;ждет выполнения другого процесса
+.def SYSPA_PROC_COMPLETED =         $C0 ;исполнение завершено
+;===============================================================================
+
 ;
 ;Константа, обозначающая длину 1 структуры атрибутов процесса (САП)
 .def SAP_LEN =              $1D     ;29
