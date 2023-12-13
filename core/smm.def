@@ -87,24 +87,27 @@
 .def W25_Handle_TypeDef =    $FF7E
 
 
+;Количество процессов в очереди дескрипторов процессов
+.def SYSCELL_NUM_OF_PROC =      $FF7D   ;byte
 ;Переменная, номер текущего процесса
-.def temp_proc_cell =           $FF7D
-;Указатель на начало очереди процессов
-.def SAP_START_ADDR =           $FF3E   ;29+29 bytes
+.def SYSCELL_TEMP_PROC_NUM =    $FF7C   ;byte
 ;Указатель на структуру атрибутов процесса, который следует отложить (archive)
-.def SYSCELL_PROCTOARCH =       $FF7B   ;word
+.def SYSCELL_PROCTOARCH =       $FF7A   ;word
 ;Указатель на структуру атрибутов процесса, который следует запустить (run)
-.def SYSCELL_PROCTORUN =        $FF79   ;word
+.def SYSCELL_PROCTORUN =        $FF78   ;word
 ;Переменная, открючающая начальное убийство процесса
-.def SYSCELL_STARTPASS =        $FF78   ;byte
+.def SYSCELL_STARTPASS =        $FF77   ;byte
 ;Переменная для хранения величины кванта времени текущего процесса
-.def SYSCELL_QUANT_TIME =       $FF3C   ;word
+.def SYSCELL_QUANT_TIME =       $FF75   ;word
 ;Массив из 16 байт для хранения содержимых ячеек памяти по адресам X000H во время записи таблицы ассоциаций в MMU
-.def SYSCELL_WB_MEMORY_SAVE =   $FF2C   ;16 bytes
+.def SYSCELL_WB_MEMORY_SAVE =   $FF65   ;16 bytes
 ;Время запуска процесса (в мс). После вызова системной функции используется для проверки, не привышен ли квант времени. Если привышен, переход к Диспетчеру задач
-.def SYSCELL_TIME_PROC_MARK =   $FF2A   ;word
+.def SYSCELL_TIME_PROC_MARK =   $FF63   ;word
 ;Переменная для хранения начального адреса буфера диска (4кБ)
-.def SYSCELL_DISKBUF_ADDR =     $FF1E
+.def SYSCELL_DISKBUF_ADDR =     $FF61   ;word
 ;Буфер 9 байт, используется файловой системой
-.def SYSCELL_STRBUF8 =          $FF20
-.def SYSCELL_STRBUF8P1 =        $FF21
+.def SYSCELL_STRBUF8 =          $FF58
+.def SYSCELL_STRBUF8P1 =        $FF59
+
+;Указатель на начало очереди процессов
+.def SAP_STARTADDR =            $FE59   ;256 bytes
