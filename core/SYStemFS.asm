@@ -1,10 +1,13 @@
 ;SYStemFS - a set of OS functions
 
+
 ; SYS_OS_muutos
 ; SYS_User_muutos
 ; SYS_Read_Time_Ms
 ; SYS_TA_write
 ; SYS_QuantTime_Set
+; SYS_UsrAddr_to_OSAddr
+
 
 ; SYStemFS
 ; Функция SYS_OS_muutos - переход в режим ОС
@@ -51,6 +54,7 @@ SYS_User_muutos:
     pop     psw
     ret
 
+
 ; SYStemFS
 ; Функция SYS_Read_Time_Ms - чтение системного времени (в микросекундах)
 ; Ввод: нет
@@ -68,6 +72,7 @@ SYS_Read_Time_Ms:
     cma
     mov     h,a
     ret
+
 
 ; SYStemFS
 ; Функция SYS_TA_write - запись таблицы ассоциаций из аттрибутов процесса
@@ -140,6 +145,7 @@ sys_ta_write_2:
     jnz     sys_ta_write_2
     ret
 
+
 ; SYStemFS
 ; Функция SYS_QuantTime_Set - установка величины кванта времени
 ; Ввод: (HL)-указатель на структуру аттрибутов процесса
@@ -147,7 +153,7 @@ sys_ta_write_2:
 ; Используемые регистры: все
 ; Оценка: длина - , время - 
 SYS_QuantTime_Set:
-    ldhi    SYSPA_STATUS
+    ldhi    SYSPA_STATUS_0
     ldax    d
     ani     $07
     add     a
@@ -168,3 +174,44 @@ sys_quanttime_set_1:
     .dw     $7530   ;30000 Приоритет 5 (пользовательский)
     .dw     $9C40   ;40000 Приоритет 6 (системный)
     .dw     $EA60   ;60000 Приоритет 7 (высший)
+    
+
+; SYStemFS
+; SYS_UsrAddr_to_OSAddr - преобразование абсолютного адреса режима ОС в
+; адрес режима пользователя
+; Ввод:  HL - указатель на САП
+;        DE - адрес для преобразования
+; Вывод: DE - преобразованный адрес
+; Используемые регистры: AF,B,D,HL
+; Читаемая памать: поля SYSPA_TA структуры атрибутов процесса
+; Оценка: длина: - , время - 
+SYS_UsrAddr_to_OSAddr:
+;Вычисление адреса смещения в САП для получения значения таблицы ассоциаций
+;HL <- HL+DE[15:13]+SYSPA_TA_01
+    mov     a,d
+    ani     $E0
+    rlc
+    rlc
+    rlc
+    adi     SYSPA_TA_01
+    add     l
+    mov     l,a
+    mvi     a,$00
+    adc     h
+    mov     h,a
+;Если DE[12]==0, то берем старшую тетраду, иначе - младшую
+    mov     a,d
+    ani     $10
+    mov     a,m
+    jz      sys_usraddr_to_osaddr_1
+    rlc
+    rlc
+    rlc
+    rlc
+sys_usraddr_to_osaddr_1:
+    ani     $F0
+    mov     b,a
+    mov     a,d
+    ani     $0F
+    add     b
+    ret
