@@ -18,7 +18,7 @@
 
 
 ;Вектор 24Н - Инквизитор
-;-------------------------------------------------------------------------------
+;===============================================================================
 ;-<Инквизитор>------------------------------------------------------------------
     .org 0024H
 TRAP_main:
@@ -35,93 +35,148 @@ TRAP_main:
     mov     a,b
     ani     $40     ;Выделяем RST7.5
     jz      TRAP_source_proc
-;-------------------------------------------------------------------------------
+;===============================================================================
 ;-<(1a) Источник прерывания - таймер>-------------------------------------------
 ;-<Диспетчер задач>-------------------------------------------------------------
 TRAP_source_timer:
 TRAP_Planner:
-;Нахождение указателя на САП, который следует отложить
-    lda     temp_proc_cell
+;--<Откладываем текущий процесс>------------------------------------------------
+;(1) Нахождение указателя на САП, который следует отложить
+    lda     SYSCELL_TEMP_PROC_NUM
     mov     e,a
-    mvi     d,$00
-    lxi     h,SAP_LEN
-    call    MUL16
-    lxi     d,SAP_START_ADDR
-    dad     d
+    xra     a
+    mov     d,a     ;очистка D и CY
+    rdel
+    rdel
+    rdel
+    rdel
+    rdel            ;DE <- TEMP_PROC_NUM*32
+    lhld    SAP_STARTADDR
+    dad     d       ;HL - указатель на САП
     shld    SYSCELL_PROCTOARCH
-;Смена процесса
-    lda     temp_proc_cell
-    inr     a
-    sta     temp_proc_cell
-    sui     num_proc
-    jnz     arch_run_1
-    sta     temp_proc_cell
-arch_run_1:
-;Нахождение указателя на САП, который следует запустить
-    lda     temp_proc_cell
-    mov     e,a
-    mvi     d,$00
-    lxi     h,SAP_LEN
-    call    MUL16
-    lxi     d,SAP_START_ADDR
-    dad     d
-    shld    SYSCELL_PROCTORUN
 ; [HL]
 ; [DE]
 ; [BC]
 ; [PSW]
 ; [USER]
-;(1) Откладываем текущий процесс
-;(загружаем в САП содержимое регистрового набора и адрес возврата)
-    lhld    SYSCELL_PROCTOARCH
-;(HL)-указатель на структуру аттрибутов процесса
+;(2) Откладываем текущий процесс (загрузка в САП сод. РОН и адрес возврата)
     ldhi    SYSPA_STACK_HL
     xchg
     mvi     c,$05
-sys_archive_proc_1:
+planner_m0:
     pop     d   ;[HL],[DE],[BC],[PSW],[USER]
     mov     m,e
     inx     h
     mov     m,d
     inx     h
     dcr     c
-    jnz     sys_archive_proc_1
-;(2) Загружаем в САП содержимое регистра SP
+    jnz     planner_m0
+;(3) Загружаем в САП содержимое регистра SP
     lhld    SYSCELL_PROCTOARCH      ;HL-указатель на САП
     ldhi    SYSPA_SP_REG
     lxi     h,$0000                 ;HL <- SP
     dad     sp
     shlx
-;(3) Выгружаем из САП содержимое регистра SP
+;--<Поиск нового процесса для запуска>------------------------------------------
+;(1) Инкремент номера текущего процесса, если >= числа процессов, придаем 0
+planner_change_proc:
+    lda     SYSCELL_NUM_OF_PROC
+    mov     b,a
+    lda     SYSCELL_TEMP_PROC_NUM
+    inr     a
+    cmp     b
+    jc      planner_m1
+    xra     a
+planner_m1:
+    sta     SYSCELL_TEMP_PROC_NUM
+;(2) Указатель на САП = SAP_START + (TEMP_PROC_NUM * 32)
+    mov     e,a
+    xra     a
+    mov     d,a
+    rdel                ;DE <- TEMP_PROC_NUM*32
+    rdel
+    rdel
+    rdel
+    rdel
+    lxi     h,SAP_STARTADDR
+    dad     d           ;HL - указатель на САП
+    shld    SYSCELL_PROCTORUN ;указатель на САП процесса, который надо запустить
+;(3) Проверка статуса.
+; - Если 00, то запуск
+; - Если 01, то выбор новой САП
+; - Если 10, то выбор новой САП
+; - Если 11, то поиск процесса-условия, выполнен - запуск, нет - выбор новой САП
+    ldhi    SYSPA_STATUS_0
+    ldax    d
+    ani     SYSPA_STATUS_STATUS_MASK
+    cpi     SYSPA_PROC_LAUNCHED
+    jz      planner_run_proc
+    cpi     SYSPA_PROC_COMPLETED
+    jnz     planner_change_proc ;SYSPA_PROC_WAITING & SYSPA_PROC_STOPPED
+;(4) Поиск САП с нужным ID
+;Байт ID - 0й байт САП (дескриптора процесса)
+;В цикле NUM_OF_PROC раз перебираем САП, если совпадение - смотрим биты статуса
+;SYSPA_STATUS_STATUS_MASK. Если равны SYSPA_PROC_COMPLETED, то начальный
+;процесс завершен, а значит, вторичный может начинать работу. Если не равен
+;SYSPA_PROC_COMPLETED, переход к planner_change_proc. Если процесс с нужным ID
+;не найден, переход к planner_change_proc.
+;Выделение байта ID первичного процесса
+    lda     SYSCELL_NUM_OF_PROC
+    mov     c,a                     ;C <- NUM_OF_PROC
+    lhld    SYSCELL_PROCTORUN
+    ldhi    SYSPA_STATUS_1
+    ldax    d                       ;A <- ID
+    lhld    SAP_STARTADDR   ;HL <- SAP_STARTADDR
+    lxi     d,$0020                 ;DE <- 32
+;(5) Цикл-пробежка по очереди САП
+planner_cycle:
+    cmp     m
+    jz      planner_m2
+    dad     d
+    dcr     c
+    jnz     planner_cycle
+    jmp     planner_change_proc
+;(6) Определить, выполнен первичный процесс или еще выполняется
+;HL - указатель на САП первичного процесса
+planner_m2:
+    ldhi    SYSPA_STATUS_0
+    ldax    d
+    ani     SYSPA_STATUS_STATUS_MASK
+    cpi     SYSPA_PROC_COMPLETED
+    jz      planner_run_proc
+    jmp     planner_change_proc
+;--<Запуск нового процесса>-----------------------------------------------------
+planner_run_proc:
+;(1) Выгружаем из САП содержимое регистра SP
     lhld    SYSCELL_PROCTORUN       ;HL-указатель на САП
     ldhi    SYSPA_SP_REG
     lhlx
     sphl
-;(4) Подготавливаем стек под новый процесс
+;(2) Подготавливаем стек под новый процесс
     lhld    SYSCELL_PROCTORUN       ;HL-указатель на САП
     ldhi    SYSPA_H_RETADDR
     xchg
     mvi     c,$05
-sys_run_proc_1:
+planner_m3:
     mov     d,m
     dcx     h
     mov     e,m
     dcx     h
     push    d   ;[USER],[PSW],[BC],[DE],[HL]
     dcr     c
-    jnz     sys_run_proc_1
-;(5) Загружаем таблицу ассоциаций для нового процесса
+    jnz     planner_m3
+;(3) Загружаем таблицу ассоциаций для нового процесса
     lhld    SYSCELL_PROCTORUN
     call    SYS_TA_write
-;(6) Загружаем размер кванта времени для нового процесса
+;(4) Загружаем размер кванта времени для нового процесса
     lhld    SYSCELL_PROCTORUN
     call    SYS_QuantTime_Set
-;(7) Фиксируем текущее машинное время в микросекундах
+;(5) Фиксируем текущее машинное время в микросекундах
     call    SYS_Read_Time_Ms
     shld    SYSCELL_TIME_PROC_MARK
     ;
     jmp     TRAP_source_end
-;-------------------------------------------------------------------------------
+;===============================================================================
 ;-<(1b) Источник прерывания - процесс>------------------------------------------    
 TRAP_source_proc:
 ;Получение значения адреса старшего байта адреса процесса пользователя,
@@ -177,7 +232,7 @@ TRAP_stack_form:
 ;Переход к системной функции
     ;(HL)-адрес возврата [FUN]
     pchl
-;-------------------------------------------------------------------------------
+;===============================================================================
 ;-<Возврат из системной функции>------------------------------------------------
 TRAP_SystemFunction_Return:
 ;Сравниваем текущее машинное время со временем последнего запуска процесса
@@ -204,11 +259,11 @@ TRAP_SystemFunction_Return:
     jnc     TRAP_source_end
 ;Иначе переход в диспетчер задач
     jmp     TRAP_Planner
-;-------------------------------------------------------------------------------
+;===============================================================================
 ;-<(2) Стандартный возврат>-----------------------------------------------------
 TRAP_source_end:
     jmp     SYS_User_muutos
-;-------------------------------------------------------------------------------
+;===============================================================================
 
 
 
@@ -220,9 +275,6 @@ Hot_Start_OS:
     ;mvi     a,SYS_CLKE_BITMASK
     mvi     a,$05   ;SYS_CLKE_BITMASK | SYS_TURBO_BITMASK
     out     SYSPORT_C
-;Начальный процесс - 0
-    mvi     a,$00
-    sta     temp_proc_cell
 ;Пропуск в первый заход TRAP (вырубаем убийцу процессов)
     mvi     a,$01
     sta     SYSCELL_STARTPASS
@@ -249,11 +301,17 @@ Hot_Start_OS:
     out     DISP_PORT
 ;Копируем заголовки процессов
     lxi     b,$003A
-    lxi     d,SAP_START_ADDR_ROM
-    lxi     h,SAP_START_ADDR
+    lxi     d,SAP_STARTADDR_ROM
+    lxi     h,SAP_STARTADDR
     call    COPCOUNT
+;Предзагрузка переменных диспетчера задач
+    mvi     a,$02
+    sta     SYSCELL_NUM_OF_PROC
+;Начальный процесс - 0
+    mvi     a,$00
+    sta     SYSCELL_TEMP_PROC_NUM
 ; Включаем запись в банк регистров
-    lxi     h,SAP_START_ADDR
+    lxi     h,SAP_STARTADDR
     call    SYS_TA_write
 ;Загружаем в стек переход к пользовательскому процессу
     lxi     h,process0
@@ -267,12 +325,12 @@ Hot_Start_OS:
 
 ;-------------------------------------------------------------------------------
 ;---<System_process_attributes>-------------------------------------------------
-;SAP_START_ADDR:
-SAP_START_ADDR_ROM:
+;SAP_STARTADDR:
+SAP_STARTADDR_ROM:
 ;--<1st process>----------------------------------------------------------------
 .db $00     ;SYSPA_ID =         $00
-.db $07     ;SYSPA_STATUS =     $01
-.db $00     ;SYSPA_STATUS2 =    $02
+.db $07     ;SYSPA_STATUS_0 =   $01
+.db $00     ;SYSPA_STATUS_1 =   $02
 ;Table of Assotiations
 .db $01     ;SYSPA_TA_01 =      $03
 .db $23     ;SYSPA_TA_23 =      $04
@@ -290,14 +348,17 @@ SAP_START_ADDR_ROM:
 ;Return address
 .dw process0   ;SYSPA_RETADDR =    $13
 ;Stack Pointer value
-.dw $1FFF
-;Name (Зарезервированные 6 байт)
-.db $00     ;SYSPA_NAME_2 =     $17
-.db $00     ;SYSPA_NAME_3 =     $18
-.db $00     ;SYSPA_NAME_4 =     $19
-.db $00     ;SYSPA_NAME_5 =     $1A
-.db $00     ;SYSPA_NAME_6 =     $1B
-.db $00     ;SYSPA_NAME_7 =     $1C
+.dw $1FFF   ;SYSPA_SP_REG
+;Зарезервированные байты
+.db $00     ;SYSPA_RES0 =       $17
+.db $00     ;SYSPA_RES1 =       $18
+.db $00     ;SYSPA_RES2 =       $19
+.db $00     ;SYSPA_RES3 =       $1A
+.db $00     ;SYSPA_RES4 =       $1B
+.db $00     ;SYSPA_RES5 =       $1C
+.db $00     ;SYSPA_RES6 =       $1D
+.db $00     ;SYSPA_RES7 =       $1E
+.db $00     ;SYSPA_RES8 =       $1F
 ;--<2nd process>----------------------------------------------------------------
 .db $01     ;SYSPA_ID =         $00
 .db $00     ;SYSPA_STATUS =     $01
@@ -319,14 +380,17 @@ SAP_START_ADDR_ROM:
 ;Return address
 .dw process1   ;SYSPA_RETADDR =    $13
 ;Stack Pointer value
-.dw $2FFF
-;Name (Зарезервированные 6 байт)
-.db $00     ;SYSPA_NAME_2 =     $17
-.db $00     ;SYSPA_NAME_3 =     $18
-.db $00     ;SYSPA_NAME_4 =     $19
-.db $00     ;SYSPA_NAME_5 =     $1A
-.db $00     ;SYSPA_NAME_6 =     $1B
-.db $00     ;SYSPA_NAME_7 =     $1C
+.dw $2FFF   ;SYSPA_SP_REG
+;Зарезервированные байты
+.db $00     ;SYSPA_RES0 =       $17
+.db $00     ;SYSPA_RES1 =       $18
+.db $00     ;SYSPA_RES2 =       $19
+.db $00     ;SYSPA_RES3 =       $1A
+.db $00     ;SYSPA_RES4 =       $1B
+.db $00     ;SYSPA_RES5 =       $1C
+.db $00     ;SYSPA_RES6 =       $1D
+.db $00     ;SYSPA_RES7 =       $1E
+.db $00     ;SYSPA_RES8 =       $1F
 ;-------------------------------------------------------------------------------
 
 ;Библиотека системных функций
