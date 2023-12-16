@@ -111,8 +111,8 @@ planner_m1:
     ani     SYSPA_STATUS_STATUS_MASK
     cpi     SYSPA_PROC_LAUNCHED
     jz      planner_run_proc
-    cpi     SYSPA_PROC_COMPLETED
-    jnz     planner_change_proc ;SYSPA_PROC_WAITING & SYSPA_PROC_STOPPED
+    cpi     SYSPA_PROC_WAITING
+    jnz     planner_change_proc ;SYSPA_PROC_STOPPED & SYSPA_PROC_COMPLETED
 ;(4) Поиск САП с нужным ID
 ;Байт ID - 0й байт САП (дескриптора процесса)
 ;В цикле NUM_OF_PROC раз перебираем САП, если совпадение - смотрим биты статуса
