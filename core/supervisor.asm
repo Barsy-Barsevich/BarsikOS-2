@@ -1,4 +1,5 @@
 ; Supervisor - главное тело 0000H
+; (E) Barsotion BarsikOS-2.17 (23.12.2023)
 
 .include /home/victor/Desktop/BarsikOS-2/core/systemdef.def
 .include /home/victor/Desktop/BarsikOS-2/core/smm.def
@@ -51,7 +52,8 @@ TRAP_Planner:
     rdel
     rdel
     rdel            ;DE <- TEMP_PROC_NUM*32
-    lhld    SAP_STARTADDR
+    lhld    SYSCELL_SAP_STARTADDR
+    ;lxi     h,SAP_STARTADDR
     dad     d       ;HL - указатель на САП
     shld    SYSCELL_PROCTOARCH
 ; [HL]
@@ -78,8 +80,10 @@ planner_m0:
     dad     sp
     shlx
 ;--<Поиск нового процесса для запуска>------------------------------------------
-;(1) Инкремент номера текущего процесса, если >= числа процессов, придаем 0
+;Стек сейчас не содержит ничего важного для работы ОС
+;Да операционке вообще неважно, что сейчас в стеке, все равно SP будем менять
 planner_change_proc:
+;(1) Инкремент номера текущего процесса, если >= числа процессов, придаем 0
     lda     SYSCELL_NUM_OF_PROC
     mov     b,a
     lda     SYSCELL_TEMP_PROC_NUM
@@ -98,7 +102,8 @@ planner_m1:
     rdel
     rdel
     rdel
-    lxi     h,SAP_STARTADDR
+    ;lxi     h,SAP_STARTADDR
+    lhld    SYSCELL_SAP_STARTADDR
     dad     d           ;HL - указатель на САП
     shld    SYSCELL_PROCTORUN ;указатель на САП процесса, который надо запустить
 ;(3) Проверка статуса.
@@ -126,8 +131,8 @@ planner_m1:
     lhld    SYSCELL_PROCTORUN
     ldhi    SYSPA_STATUS_1
     ldax    d                       ;A <- ID
-    lhld    SAP_STARTADDR   ;HL <- SAP_STARTADDR
-    lxi     d,$0020                 ;DE <- 32
+    lhld    SYSCELL_SAP_STARTADDR   ;HL <- SAP_STARTADDR
+    lxi     d,ONE_SAP_LEN           ;DE <- 32
 ;(5) Цикл-пробежка по очереди САП
 planner_cycle:
     cmp     m
@@ -177,7 +182,7 @@ planner_m3:
     ;
     jmp     TRAP_source_end
 ;===============================================================================
-;-<(1b) Источник прерывания - процесс>------------------------------------------    
+;-<(1b) Источник прерывания - процесс>------------------------------------------
 TRAP_source_proc:
 ;Получение значения адреса старшего байта адреса процесса пользователя,
 ;откуда был выполнен переход в режим ОС
@@ -188,7 +193,8 @@ TRAP_source_proc:
     cpi     $F0         ;проверка на сектор 'F'
     ;cpi     $00         ;проверка на сектор '0'
     jz      TRAP_stack_form     ;переход к выполнению системной функции
-;-<(1ba) Убить процесс>---------------------------------------------------------
+;===============================================================================
+;-<(1ba) Убийца процессов>------------------------------------------------------
     ;Смотрим SYSCELL_STARTPASS (Если не равен 0, то не убиваем. Установ в 0)
     lda     SYSCELL_STARTPASS
     mov     b,a
@@ -197,13 +203,62 @@ TRAP_source_proc:
     mov     a,b
     ora     a
     jnz     TRAP_source_end     ;переход к стандартному выходу
-    ;печать значения 1 на экране
-    mvi     a,$31
-    call    ASCSEG7
-    ori     $80
-    cma
-    out     DISP_PORT
-    jmp     TRAP_source_end     ;переход к стандартному возврату
+;--<Таки убить>-----------------------------------------------------------------
+;Стек не должен содержать к этому моменту никакой важной для ОС информации!
+;Ну типа, если там есть какая-то важная информация, она потеряется
+;--<Проверка на ожидаемость>----------------------------------------------------
+    lhld    SYSCELL_PROCTORUN
+    ldhi    SYSPA_STATUS_0
+    ldax    d
+    ani     SYSPA_STATUS_WAITED_MASK
+;Если 0 - убрать процесс из QSAP
+;Если 1 - пометить как завершенный
+    jz      killer_from_qsap
+;--<Пометить процесс как завершенный>-------------------------------------------
+    ldhi    SYSPA_STATUS_0
+    ldax    d
+    ori     SYSPA_PROC_COMPLETED
+    stax    d
+;Переход к выбору следующей задачи
+    jmp     planner_change_proc
+;--<Удаление дескриптора процесса из очереди дескрипторов QSAP>-----------------
+killer_from_qsap:
+;(1) Найти следующий дескриптор процесса
+    lda     SYSCELL_NUM_OF_PROC
+    mov     c,a
+    lda     SYSCELL_TEMP_PROC_NUM
+    inr     a
+    cmp     c   ;если temp_proc >= num_of_proc, CY:=0
+;Если temp_proc >= num_of_proc, тогда адрес сл САП равен SAP_STARTADDR.
+;Тогда ничего не делаем, просто декремент NUM_OF_PROC
+    jnc     killer_m1
+;NEXT_PROC равен TEMP_PROC+ONE_SAP_LEN. Копировать верхнюю часть QSAP на
+;ONE_SAP_LEN вниз, затем декремент NUM_OF_PROC
+;(2) DE <- NEXT_PROC := TEMP_PROC + ONE_SAP_LEN
+    lxi     d,ONE_SAP_LEN
+    lhld    SYSCELL_PROCTORUN
+    dad     d
+    xchg
+;(3) BC <- 'сколько' := SAP_STARTADDR + QSAP_LEN - NEXT_PROC
+    lhld    SYSCELL_SAP_STARTADDR
+    lxi     b,QSAP_LEN
+    dad     b
+    mov     b,d
+    mov     c,e
+    dsub
+    mov     b,h
+    mov     c,l
+;(4) HL <- SYSCELL_PROCTORUN
+    lhld    SYSCELL_PROCTORUN
+;(5) Копируем
+    call    COPCOUNT
+;(6) NUM_OF_PROC -= 1
+killer_m1:
+    lxi     h,SYSCELL_NUM_OF_PROC
+    dcr     m
+;(7) Переход к выбору следующей задачи
+    jmp     planner_change_proc
+;===============================================================================
 ;-<(1bb) Переход к исполнению системной функции>--------------------------------
 TRAP_stack_form:
 ;Перестановка:
@@ -241,7 +296,7 @@ TRAP_SystemFunction_Return:
     mov     c,l
     call    SYS_Read_Time_Ms
 ;(HL)<-(millis-metka)
-    DSUB
+    dsub
 ;Защита от downflow. Недополнение случается 1 раз в 32.768 сек, что больше
 ;на порядки максимальных размеров кванта времени, можно использовать модуль
     call    ABS
@@ -272,12 +327,18 @@ TRAP_source_end:
 ;---<Подпрограмма "Горячий старт ОС">-------------------------------------------
 Hot_Start_OS:
 ;CLKE и Турборежим
-    ;mvi     a,SYS_CLKE_BITMASK
-    mvi     a,$05   ;SYS_CLKE_BITMASK | SYS_TURBO_BITMASK
+    mvi     a,SYS_CLKE_BITMASK
+    ;mvi     a,$05   ;SYS_CLKE_BITMASK | SYS_TURBO_BITMASK
     out     SYSPORT_C
 ;Пропуск в первый заход TRAP (вырубаем убийцу процессов)
     mvi     a,$01
     sta     SYSCELL_STARTPASS
+;Загрузка указателя на очередь дескрипторов процессов (QSAP)
+    lxi     h,SAP_STARTADDR
+    shld    SYSCELL_SAP_STARTADDR
+    
+    mvi     a,$0A
+    sta     $8010
 ;Инициализация TIMER1 в режим 3, коэффициент - CLT_Ticks_Per_Ms
     mvi     a,$76
     out     TIMER_MODEREG
@@ -300,9 +361,13 @@ Hot_Start_OS:
     mvi     a,$55
     out     DISP_PORT
 ;Копируем заголовки процессов
-    lxi     b,$003A
+    mvi     b,$00
+    mvi     a,ONE_SAP_LEN
+    add     a
+    mov     c,a
     lxi     d,SAP_STARTADDR_ROM
-    lxi     h,SAP_STARTADDR
+    ;lxi     h,SAP_STARTADDR
+    lhld    SYSCELL_SAP_STARTADDR
     call    COPCOUNT
 ;Предзагрузка переменных диспетчера задач
     mvi     a,$02
@@ -311,7 +376,8 @@ Hot_Start_OS:
     mvi     a,$00
     sta     SYSCELL_TEMP_PROC_NUM
 ; Включаем запись в банк регистров
-    lxi     h,SAP_STARTADDR
+    ;lxi     h,SAP_STARTADDR
+    lhld    SYSCELL_SAP_STARTADDR
     call    SYS_TA_write
 ;Загружаем в стек переход к пользовательскому процессу
     lxi     h,process0
@@ -408,10 +474,20 @@ process0:
     ;inr     a
     ;sta     $8010
     ;call    Function
-    ;lxi     h,$01F4
-    ;call    Delay_ms_6
-    ;call    Read_Time
-    call    W25_Test
+    ;call    W25_Test
+    
+    call    Read_Time
+    lxi     h,$01F4
+    call    Delay_ms_6
+    lda     $8010
+    dcr     a
+    sta     $8010
+    jnz     process0
+    mvi     a,40H
+    sim
+    mvi     a,C0H
+    sim
+    
     jmp     process0
 
 process1:
