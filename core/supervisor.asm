@@ -1,5 +1,5 @@
 ; Supervisor - главное тело 0000H
-; (E) Barsotion BarsikOS-2.17 (23.12.2023)
+; (E) Barsotion BarsikOS-2.17 (22.12.2023)
 
 .include /home/victor/Desktop/BarsikOS-2/core/systemdef.def
 .include /home/victor/Desktop/BarsikOS-2/core/smm.def
@@ -395,7 +395,7 @@ Hot_Start_OS:
 SAP_STARTADDR_ROM:
 ;--<1st process>----------------------------------------------------------------
 .db $00     ;SYSPA_ID =         $00
-.db $07     ;SYSPA_STATUS_0 =   $01
+.db $25     ;SYSPA_STATUS_0 =   $01
 .db $00     ;SYSPA_STATUS_1 =   $02
 ;Table of Assotiations
 .db $01     ;SYSPA_TA_01 =      $03
@@ -427,7 +427,7 @@ SAP_STARTADDR_ROM:
 .db $00     ;SYSPA_RES8 =       $1F
 ;--<2nd process>----------------------------------------------------------------
 .db $01     ;SYSPA_ID =         $00
-.db $00     ;SYSPA_STATUS =     $01
+.db $85     ;SYSPA_STATUS =     $01
 .db $00     ;SYSPA_STATUS2 =    $02
 ;Table of Assotiations
 .db $01     ;SYSPA_TA_01 =      $03
@@ -477,7 +477,7 @@ process0:
     ;call    W25_Test
     
     call    Read_Time
-    lxi     h,$01F4
+    lxi     h,$03E8
     call    Delay_ms_6
     lda     $8010
     dcr     a
@@ -491,4 +491,7 @@ process0:
     jmp     process0
 
 process1:
+    call    Read_Time
+    lxi     h,$01F4
+    call    Delay_ms_6
     jmp     process1
