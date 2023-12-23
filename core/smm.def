@@ -108,6 +108,8 @@
 ;Буфер 9 байт, используется файловой системой
 .def SYSCELL_STRBUF8 =          $FF58
 .def SYSCELL_STRBUF8P1 =        $FF59
+;Указатель на начало QSAP (очереди дескрипторов процессов)
+.def SYSCELL_SAP_STARTADDR =    $FF56
 
 ;Указатель на начало очереди процессов
-.def SAP_STARTADDR =            $FE59   ;256 bytes
+.def SAP_STARTADDR =            $FE56   ;256 bytes
