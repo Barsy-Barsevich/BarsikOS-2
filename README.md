@@ -1,4 +1,4 @@
-# Barsotion BarsikOS v2.17α (13.12.2023)
+# Barsotion BarsikOS v2.17α (23.12.2023)
 
 A simple multitask operation system for 'Laulaja-4' computer based on 8085
 
