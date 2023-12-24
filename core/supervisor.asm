@@ -476,17 +476,52 @@ process0:
     ;call    Function
     ;call    W25_Test
     
-    call    Read_Time
-    lxi     h,$03E8
+    ;call    Read_Time
+    ;lxi     h,$03E8
+    ;call    Delay_ms_6
+    ;lda     $8010
+    ;dcr     a
+    ;sta     $8010
+    ;jnz     process0
+    ;mvi     a,40H
+    ;sim
+    ;mvi     a,C0H
+    ;sim
+    
+    call    W25_Test
+    call    ST7920_INI
+    call    GR_INI
+;Установка таблицы шрифтов
+    lxi     h,$9000
+    push    h
+    call    GR_FONT
+    pop     h
+;Установка начального адреса видеобуфера
+    lxi     h,$C800
+    push    h
+    call    GR_START_BUF_ADDR
+    pop     h
+;Очистка видеобуфера, печать туда текста
+    call    ST7920_BUF_CLR
+    lxi     h,string_test
+    push    h
+    lxi     h,$0018
+    push    h
+    lxi     h,$0000
+    push    h
+    call    GR_STOPT
+    pop     h
+    pop     h
+    pop     h
+    lxi     h,$C800
+    mvi     m,$FF
+    inx     h
+    inx     h
+    mvi     m,$FF
+    call    ST7920_PRINT_BUF
+;Задержка
+    lxi     h,$01F4
     call    Delay_ms_6
-    lda     $8010
-    dcr     a
-    sta     $8010
-    jnz     process0
-    mvi     a,40H
-    sim
-    mvi     a,C0H
-    sim
     
     jmp     process0
 
@@ -495,3 +530,7 @@ process1:
     lxi     h,$01F4
     call    Delay_ms_6
     jmp     process1
+
+string_test:
+.db $0E
+.ds 'BarsikOS-v2.18'
