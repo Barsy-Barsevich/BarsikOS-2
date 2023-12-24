@@ -76,6 +76,22 @@ SYS_OS_muutos:
     jmp     W25_SECTOR_ERASE
 ;Dop
     jmp     W25_Test
+;GRLIBUSR
+    jmp     GR_INI_USR
+    jmp     GR_RESOLUTION_USR
+    jmp     GR_START_BUF_ADDR_USR
+    jmp     GR_BORDER_USR
+    jmp     GR_ISSTYLE_USR
+    jmp     GR_FONT_USR
+    jmp     GR_SYM_PARAMETERS_USR
+    jmp     GR_GAP_USR
+    jmp     GR_DOT_USR
+    jmp     GR_WRSYM_USR
+    jmp     GR_STOPT_USR
+    jmp     GR_STMONO_USR
+    jmp     GR_LINE_USR
+    jmp     GR_CIRCLE_USR
+    jmp     GR_FRAME_USR
 
 .include /home/victor/Desktop/BarsikOS-2/core/systemdef.def
 .include /home/victor/Desktop/BarsikOS-2/core/smm.def
@@ -84,6 +100,7 @@ SYS_OS_muutos:
 .include /home/victor/Desktop/BarsikOS-2/drive/ST7920_drive.asm
 .include /home/victor/Desktop/BarsikOS-2/drive/w25.asm
 .include /home/victor/Desktop/BarsikOS-2/drive/fat_main.asm
+.include /home/victor/Desktop/BarsikOS-2/drive/GRLIBUSR.ASM
 
 ; (E)  Barsotion KY;
 ; Стандартный SPI обмен v1.2 (проверено 11.07.23)
@@ -267,22 +284,28 @@ W25_Test:
 ;    mvi     a,$0A
 ;    call    SendData
     
+    lxi     h,$0010
+    push    h
+    lxi     h,$9000
+    push    h
+    call    W25_SECTOR_READ
+    
 ;Задержка
-    lxi     h,$A000
-    call    Delay_ms_6
+    ;lxi     h,$A000
+    ;call    Delay_ms_6
     ret
 
 String_Name:
-;.db $08
-;.ds 'SYSTEM'
-;.db $20
-;.db $20
+.db $08
+.ds 'SYSTEM'
+.db $20
+.db $20
 
 ;.db $08
 ;.ds 'NEXTFILE'
 
-.db $08
-.ds 'DUMMI'
-.db $20
-.db $20
-.db $20
+;.db $08
+;.ds 'DUMMI'
+;.db $20
+;.db $20
+;.db $20
