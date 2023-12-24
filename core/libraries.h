@@ -49,3 +49,19 @@
 .def W25_SECTOR_ERASE =     $F08B
 ;
 .def W25_Test =             $F08E
+;
+.def GR_INI =               $F091
+.def GR_RESOLUTION =        $F094
+.def GR_START_BUF_ADDR =    $F097
+.def GR_BORDER =            $F09A
+.def GR_ISSTYLE =           $F09D
+.def GR_FONT =              $F0A0
+.def GR_SYM_PARAMETERS =    $F0A3
+.def GR_GAP =               $F0A6
+.def GR_DOT =               $F0A9
+.def GR_WRSYM =             $F0AC
+.def GR_STOPT =             $F0AF
+.def GR_STMONO =            $F0B2
+.def GR_LINE =              $F0B5
+.def GR_CIRCLE =            $F0B8
+.def GR_FRAME =             $F0BB
