@@ -13,6 +13,9 @@
 .def TIMER_COUNTER_1 =      $89
 .def TIMER_COUNTER_2 =      $8A
 .def TIMER_MODEREG =        $8B
+;Контроллер прерываний
+.def PIC_REG_A0 =           $90
+.def PIC_REG_A1 =           $91
 ;Дисплей
 .def DISP_PORT =            $98
 ;===============================================================================
@@ -118,6 +121,45 @@
 .def SYSPA_PROC_STOPPED =           $40 ;остановлен до освобождения критического ресурса
 .def SYSPA_PROC_WAITING =           $80 ;ждет выполнения другого процесса
 .def SYSPA_PROC_COMPLETED =         $C0 ;исполнение завершено
+
+;===============================================================================
+;--<Настройка ПКП>--------------------------------------------------------------
+;===============================================================================
+;Установка режима приема прерываний. TRIG - по фронту, LEVEL - по уровню
+.def PIC_ICW1_TRIG =        $17
+.def PIC_ICW1_LEVEL =       $1F
+.def PIC_ICW1 =             PIC_ICW1_TRIG
+;Маски прерываний
+.def PIC_INT_DISABLE_MASK =     $FF
+.def PIC_INTMASK_CONF =         $FB
+.def PIC_INTMASK_NPROTEST =     $F7
+.def PIC_INTMASK_INT1 =         $EF
+.def PIC_INTMASK_INT2 =         $DF
+.def PIC_INTMASK_TIMER0 =       $BF
+.def PIC_INTMASK_TIMER1 =       $7F
+.def PIC_INTMASK_CONF_INV =     $04
+.def PIC_INTMASK_NPROTEST_INV = $08
+.def PIC_INTMASK_INT1_INV =     $10
+.def PIC_INTMASK_INT2_INV =     $20
+.def PIC_INTMASK_TIMER0_INV =   $40
+.def PIC_INTMASK_TIMER1_INV =   $80
+.def PIC_DEFAULT_INTMASK =      PIC_INTMASK_TIMER0
+;
+.def SYS_VECT_CONF =        $0000
+.def SYS_VECT_NPROTEST =    $0000
+.def SYS_VECT_INT1 =        $0000
+.def SYS_VECT_INT2 =        $0000
+.def SYS_VECT_TIMER0 =      $0000
+.def SYS_VECT_TIMER1 =      $0000
+;Ссылки на подпрограммы-обработчики прерываний
+.def INT_VECT_0 =       $0000 ;(dummy)      
+.def INT_VECT_1 =       $0000 ;(dummy)
+.def INT_VECT_2 =       SYS_VECT_CONF
+.def INT_VECT_3 =       SYS_VECT_NPROTEST
+.def INT_VECT_4 =       SYS_VECT_INT1
+.def INT_VECT_5 =       SYS_VECT_INT2
+.def INT_VECT_6 =       SYS_VECT_TIMER0
+.def INT_VECT_7 =       SYS_VECT_TIMER1
 ;===============================================================================
 
 ;
@@ -125,7 +167,12 @@
 .def ONE_SAP_LEN =          $20     ;32
 ;Длина очереди дескрипторов процессов
 .def QSAP_LEN =             $0100   ;256=32*8
-;Константа, обозначающая число процессов в системе
-;.def num_proc =             $02
 ;
 .def CLT_Ticks_Per_Ms =     $0258   ;600
+
+;Кластер FAT
+.def FAT_CLUSTER =          $0001
+;Первый кластер рут-директории диска
+.def FAT_START_POINTER =    $0002
+;Указатель на буфер диска (4кБ)
+.def FAT_DISKBUF_ADDR =     $A000
