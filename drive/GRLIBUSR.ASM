@@ -1366,138 +1366,138 @@ sector_4:
 ;
 ; Начало кода:
 
-GR_FRAME_USR:
-    call    SYS_OS_muutos
-;DE <- SP+12
-    ldsi    $0C
-;Чтение n=5 переменных
-; x0_frame
-; x1_frame
-; y0_frame
-; y1_frame
-    lhlx
-    shld    radius
-    inx     d
-    inx     d
-    lhlx
-    shld    y1_frame
-    inx     d
-    inx     d
-    lhlx
-    shld    x1_frame
-    inx     d
-    inx     d
-    lhlx
-    shld    y0_frame
-    inx     d
-    inx     d
-    lhlx
-    shld    x0_frame
-GR_FRAME_INSIDE:
-; Предустановка x_sector & y_sector
-; x_sector = 0
-; y_sector = R
-    lxi     h,$0000
-    shld    x_sector
-    lhld    radius
-    call    ABS
-    shld    y_sector
-; Рисуем сектор I(IV)
-; x_circle = (x1-R)
-; y_circle = (y1-R)
-; xplus = 1
-; yplus = -1
-    lhld    radius
-    xchg
-    lhld    x1_frame
-    call    SUB16
-    shld    x_circle
-    lhld    radius
-    xchg
-    lhld    y1_frame
-    call    SUB16
-    shld    y_circle
-    lxi     h,$0001
-    shld    xplus
-    lxi     h,$FFFF
-    shld    yplus
-    call    sector
-; Рисуем сектор IV(I)
-; x_circle = (x1-R)
-; y_circle = (y0+R)
-; xplus = -1
-; yplus = -1
-    lhld    radius
-    xchg
-    lhld    y0_frame
-    dad     d
-    shld    y_circle
-    lxi     h,$FFFF
-    shld    xplus
-    call    sector
-; Рисуем сектор III(II)
-; x_circle = (x0+R)
-; y_circle = (y0+R)
-; xplus = -1
-; yplus = 1
-    lhld    radius
-    xchg
-    lhld    x0_frame
-    dad     d
-    shld    x_circle
-    lxi     h,$0001
-    shld    yplus
-    call    sector
-; Рисуем сектор II(III)
-; x_circle = (x0+R)
-; y_circle = (y1-R)
-; xplus = 1
-; yplus = 1
-    lhld    radius
-    xchg
-    lhld    y1_frame
-    call    SUB16
-    shld    y_circle
-    lxi     h,$0001
-    shld    xplus
-    call    sector
-; line((x1-R);y1)((x0+R);y1)
-    lhld    radius
-    xchg
-    lhld    x1_frame
-    call    SUB16
-    shld    x0_line
-    lhld    radius
-    xchg
-    lhld    x0_frame
-    dad     d
-    shld    x1_line
-    lhld    y1_frame
-    shld    y0_line
-    shld    y1_line
-    call    GR_LINE_INSIDE
-; line((x1-R);y0)((x0+R+1);y0)
-    lhld    y0_frame
-    shld    y0_line
-    shld    y1_line
-    call    GR_LINE_INSIDE
-; line(x0;(y1-R))(x0;(y0+R))
-    lhld    radius
-    xchg
-    lhld    y1_frame
-    call    SUB16
-    shld    y0_line
-    lhld    radius
-    xchg
-    lhld    y0_frame
-    dad     d
-    shld    y1_line
-    lhld    x0_frame
-    shld    x0_line
-    shld    x1_line
-    call    GR_LINE_INSIDE
-; line(x1;(y1-R))(x1;(y0+R))
-    lhld    x1_frame
-    shld    x0_line
-    shld    x1_line
-    jmp     GR_LINE_INSIDE
+;GR_FRAME_USR:
+;    call    SYS_OS_muutos
+;;DE <- SP+12
+;    ldsi    $0C
+;;Чтение n=5 переменных
+;; x0_frame
+;; x1_frame
+;; y0_frame
+;; y1_frame
+;    lhlx
+;    shld    radius
+;    inx     d
+;    inx     d
+;    lhlx
+;    shld    y1_frame
+;    inx     d
+;    inx     d
+;    lhlx
+;    shld    x1_frame
+;    inx     d
+;    inx     d
+;    lhlx
+;    shld    y0_frame
+;    inx     d
+;    inx     d
+;    lhlx
+;    shld    x0_frame
+;GR_FRAME_INSIDE:
+;; Предустановка x_sector & y_sector
+;; x_sector = 0
+;; y_sector = R
+;    lxi     h,$0000
+;    shld    x_sector
+;    lhld    radius
+;    call    ABS
+;    shld    y_sector
+;; Рисуем сектор I(IV)
+;; x_circle = (x1-R)
+;; y_circle = (y1-R)
+;; xplus = 1
+;; yplus = -1
+;    lhld    radius
+;    xchg
+;    lhld    x1_frame
+;    call    SUB16
+;    shld    x_circle
+;    lhld    radius
+;    xchg
+;    lhld    y1_frame
+;    call    SUB16
+;    shld    y_circle
+;    lxi     h,$0001
+;    shld    xplus
+;    lxi     h,$FFFF
+;    shld    yplus
+;    call    sector
+;; Рисуем сектор IV(I)
+;; x_circle = (x1-R)
+;; y_circle = (y0+R)
+;; xplus = -1
+;; yplus = -1
+;    lhld    radius
+;    xchg
+;    lhld    y0_frame
+;    dad     d
+;    shld    y_circle
+;    lxi     h,$FFFF
+;    shld    xplus
+;    call    sector
+;; Рисуем сектор III(II)
+;; x_circle = (x0+R)
+;; y_circle = (y0+R)
+;; xplus = -1
+;; yplus = 1
+;    lhld    radius
+;    xchg
+;    lhld    x0_frame
+;    dad     d
+;    shld    x_circle
+;    lxi     h,$0001
+;    shld    yplus
+;    call    sector
+;; Рисуем сектор II(III)
+;; x_circle = (x0+R)
+;; y_circle = (y1-R)
+;; xplus = 1
+;; yplus = 1
+;    lhld    radius
+;    xchg
+;    lhld    y1_frame
+;    call    SUB16
+;    shld    y_circle
+;    lxi     h,$0001
+;    shld    xplus
+;    call    sector
+;; line((x1-R);y1)((x0+R);y1)
+;    lhld    radius
+;    xchg
+;    lhld    x1_frame
+;    call    SUB16
+;    shld    x0_line
+;    lhld    radius
+;    xchg
+;    lhld    x0_frame
+;    dad     d
+;    shld    x1_line
+;    lhld    y1_frame
+;    shld    y0_line
+;    shld    y1_line
+;    call    GR_LINE_INSIDE
+;; line((x1-R);y0)((x0+R+1);y0)
+;    lhld    y0_frame
+;    shld    y0_line
+;    shld    y1_line
+;    call    GR_LINE_INSIDE
+;; line(x0;(y1-R))(x0;(y0+R))
+;    lhld    radius
+;    xchg
+;    lhld    y1_frame
+;    call    SUB16
+;    shld    y0_line
+;    lhld    radius
+;    xchg
+;    lhld    y0_frame
+;    dad     d
+;    shld    y1_line
+;    lhld    x0_frame
+;    shld    x0_line
+;    shld    x1_line
+;    call    GR_LINE_INSIDE
+;; line(x1;(y1-R))(x1;(y0+R))
+;    lhld    x1_frame
+;    shld    x0_line
+;    shld    x1_line
+;    jmp     GR_LINE_INSIDE
