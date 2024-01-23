@@ -256,56 +256,65 @@ W25_Test:
     pop     h
     mov     a,h
     out     DISP_PORT
-;Загрузка адреса строки
-    lxi     h,String_Name
+;;Загрузка адреса строки
+;    lxi     h,String_Name
+;    push    h
+;;Номер начального кластера директории, в которой ведем поиск
+;    lxi     h,$0002
+;    push    h
+;    call    FAT_FIND_BY_NAME
+;;Статус исследуемого файла
+;    pop     psw
+;;Выгружаем номер первого кластера найденного файла/субдиректории
+;    pop     h
+;;Читаем данный кластер
+;    push    h
+;    
+;    mov     a,l
+;    call    BCDSEG7
+;    cma
+;    out     DISP_PORT
+;    
+;    lxi     h,$9000
+;    push    h
+;    call    DISK_CLUSTER_READ
+
+;***Test FBP *******************************************************************
+    lxi     h,StringPat
     push    h
-;Номер начального кластера директории, в которой ведем поиск
-    lxi     h,$0002
-    push    h
-    call    FAT_FIND_BY_NAME
-;Выгружаем номер первого кластера найденного файла/субдиректории
-    pop     h
-    mov     a,l
+    call    FAT_FBP
+    pop     psw
+    mvi     a,$08
     call    BCDSEG7
     cma
     out     DISP_PORT
+;*******************************************************************************
 
-;Чтение ID
-;    call    W25_READ_ID
+;    call    FAT_SPR
+;;Загрузка адреса строки
+;    lxi     h,String_Name
+;    push    h
+;;Номер начального кластера директории, в которой ведем поиск
+;    ;lxi     h,$0002
+;    lhld    SYSCELL_FAT_POINTER
+;    push    h
+;    call    FAT_FIND_BY_NAME
+;;Статус исследуемого файла
+;    pop     psw
+;;Выгружаем номер первого кластера найденного файла/субдиректории
 ;    pop     h
-;    mov     a,h
-;    out     DISP_PORT
-;    mvi     a,$41
-;    call    SendData
-;    mvi     a,$42
-;    call    SendData
-;    mvi     a,$43
-;    call    SendData
-;    mvi     a,$0A
-;    call    SendData
+;    shld    SYSCELL_FAT_POINTER
     
-    lxi     h,$0010
+    
+    lhld    SYSCELL_FAT_POINTER
     push    h
     lxi     h,$9000
     push    h
-    call    W25_SECTOR_READ
-    
-;Задержка
-    ;lxi     h,$A000
-    ;call    Delay_ms_6
+    call    DISK_CLUSTER_READ
     ret
 
-String_Name:
-.db $08
-.ds 'SYSTEM'
-.db $20
-.db $20
 
-;.db $08
-;.ds 'NEXTFILE'
+StringPat:
+.db $10
+.ds 'SUBDIR2/UWFB.BIN'
 
-;.db $08
-;.ds 'DUMMI'
-;.db $20
-;.db $20
-;.db $20
