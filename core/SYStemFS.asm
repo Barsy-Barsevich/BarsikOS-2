@@ -7,6 +7,7 @@
 ; SYS_TA_write
 ; SYS_QuantTime_Set
 ; SYS_UsrAddr_to_OSAddr
+; SYS_PIC_INIT
 
 
 ; SYStemFS
@@ -215,3 +216,68 @@ sys_usraddr_to_osaddr_1:
     ani     $0F
     add     b
     ret
+
+
+; SYStemFS
+; SYS_PIC_INIT - Инициализация контроллера прерываний КР1810ВН59А
+; Ввод: нет
+; Вывод: нет
+; Используемые регистры: AF,HL
+; Используемые порты: PIC_REG_A0,PIC_REG_A1
+; Используемая память: нет
+; Использование функций:
+;  - COPCOUNT
+; Оценка: длина - , время - 
+SYS_PIC_INIT:
+    lxi     h,PIC_INT_STARTADDR
+;(1) Отправка команды СКИ1и или СКИ1к (D3=0 - по фронту, иначе по уровню)
+;ПКП в системе единственный, смещение адресов векторов 4.
+;|A7|A6|A5|1|0|1|1|1|
+    mov     a,l
+    ani     $E0
+    ori     PIC_ICW1
+    out     PIC_REG_A0
+;(2) Отправка команды СКИ2
+;|A15|A14|A13|A12|A11|A10|A9|A8|
+    mov     a,h
+    out     PIC_REG_A1
+;Команды СКИ3 и СКИ4 пропустить
+;(3) Отправка команды СКО1
+    mvi     a,PIC_DEFAULT_INTMASK
+    out     PIC_REG_A1
+;(4) Отправка команды СКО2д
+    mvi     a,$80
+    out     PIC_REG_A0
+;(5) Загрузка таблицы векторов прерываний
+    lxi     b,$0032
+    lxi     d,SYS_Interrupt_Table_Default
+    lxi     h,PIC_INT_STARTADDR
+    call    COPCOUNT
+;Возврат
+    ret
+
+SYS_Interrupt_Table_Default:
+    .db     $C3
+    .dw     INT_VECT_0
+    .db     $00
+    .db     $C3
+    .dw     INT_VECT_1
+    .db     $00
+    .db     $C3
+    .dw     INT_VECT_2
+    .db     $00
+    .db     $C3
+    .dw     INT_VECT_3
+    .db     $00
+    .db     $C3
+    .dw     INT_VECT_4
+    .db     $00
+    .db     $C3
+    .dw     INT_VECT_5
+    .db     $00
+    .db     $C3
+    .dw     INT_VECT_6
+    .db     $00
+    .db     $C3
+    .dw     INT_VECT_7
+    .db     $00
