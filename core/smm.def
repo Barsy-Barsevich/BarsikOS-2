@@ -105,11 +105,28 @@
 .def SYSCELL_TIME_PROC_MARK =   $FF63   ;word
 ;Переменная для хранения начального адреса буфера диска (4кБ)
 .def SYSCELL_DISKBUF_ADDR =     $FF61   ;word
-;Буфер 9 байт, используется файловой системой
-.def SYSCELL_STRBUF8 =          $FF58
-.def SYSCELL_STRBUF8P1 =        $FF59
+;Буфер 11 байт, используется файловой системой
+.def SYSCELL_FBN11 =            $FF55
+.def SYSCELL_FBN11P1 =          $FF56
 ;Указатель на начало QSAP (очереди дескрипторов процессов)
-.def SYSCELL_SAP_STARTADDR =    $FF56
+.def SYSCELL_SAP_STARTADDR =    $FF53   ;word
 
 ;Указатель на начало очереди процессов
-.def SAP_STARTADDR =            $FE56   ;256 bytes
+.def SAP_STARTADDR =            $FE53   ;256 bytes
+
+;Таблица векторов прерываний ПКП (32 байта)
+.def PIC_INT_STARTADDR =        $FE33
+;Переменная, в которую записывается длина файла/кат, в который спускаемся
+.def SYSCELL_FAT_SF_LEN =       $FE2F   ;unsigned longint
+.def SYSCELL_FAT_SF_LEN_XLSB =  $FE2F
+.def SYSCELL_FAT_SF_LEN_LSB =   $FE30
+.def SYSCELL_FAT_SF_LEN_MSB =   $FE31
+.def SYSCELL_FAT_SF_LEN_XMSB =  $FE32
+;Переменная, в которую записывается статус файла/кат, в который спускаемся
+.def SYSCELL_FAT_SF_STATUS =    $FE2E   ;byte
+;Буфер 11 байт, используется файловой системой
+.def SYSCELL_FBP11 =            $FE22
+.def SYSCELL_FBP11P1 =          $FE23
+.def SYSCELL_FBP11P9 =          $FE2B
+;Переменная для хранения номера текущего указателя на 1 кластер файла/субдир
+.def SYSCELL_FAT_POINTER =      $FE20   ;word
