@@ -92,6 +92,8 @@ SYS_OS_muutos:
     jmp     GR_LINE_USR
     jmp     GR_CIRCLE_USR
     jmp     GR_FRAME_USR
+;Ужасная подстава, функция SYStemFS
+    jmp     SYS_User_muutos
 
 .include /home/victor/Desktop/BarsikOS-2/core/systemdef.def
 .include /home/victor/Desktop/BarsikOS-2/core/smm.def
@@ -101,6 +103,35 @@ SYS_OS_muutos:
 .include /home/victor/Desktop/BarsikOS-2/drive/w25.asm
 .include /home/victor/Desktop/BarsikOS-2/drive/fat_main.asm
 .include /home/victor/Desktop/BarsikOS-2/drive/GRLIBUSR.ASM
+
+
+; SYStemFS
+; Функция SYS_User_muutos - переход в режим пользователя
+; Ввод: нет
+; Вывод: нет
+; Используемые регистры: все
+; Используемые порты: таймер номер 2
+; Оценка: длина - 23 байта, время - 123 такта
+SYS_User_muutos:
+;Настройка таймера
+    mvi     a,B0H
+    out     TIMER_MODEREG
+    lhld    SYSCELL_QUANT_TIME
+    mov     a,l
+    out     TIMER_COUNTER_2
+    mov     a,h
+    out     TIMER_COUNTER_2
+; Включаем режим пользователя
+    mvi     a,40H
+    sim
+    mvi     a,C0H
+    sim
+    pop     h
+    pop     d
+    pop     b
+    pop     psw
+    ret
+    
 
 ; (E)  Barsotion KY;
 ; Стандартный SPI обмен v1.2 (проверено 11.07.23)
@@ -243,19 +274,19 @@ SendData:
 
 W25_Test:
     call    SYS_OS_muutos
-    lxi     h,W25_Handle_TypeDef
-    push    h
-    call    W25_SET_BASE_ADDRESS
-    mvi     a,$04
-    push    psw
-    call    W25_SET_SS_BIT
-    lxi     h,$A000
-    shld    SYSCELL_DISKBUF_ADDR
-
-    call    W25_READ_ID
-    pop     h
-    mov     a,h
-    out     DISP_PORT
+;    lxi     h,W25_Handle_TypeDef
+;    push    h
+;    call    W25_SET_BASE_ADDRESS
+;    mvi     a,$04
+;    push    psw
+;    call    W25_SET_SS_BIT
+;    lxi     h,$A000
+;    shld    SYSCELL_DISKBUF_ADDR
+;
+;    call    W25_READ_ID
+;    pop     h
+;    mov     a,h
+;    out     DISP_PORT
 ;;Загрузка адреса строки
 ;    lxi     h,String_Name
 ;    push    h
@@ -278,18 +309,18 @@ W25_Test:
 ;    lxi     h,$9000
 ;    push    h
 ;    call    DISK_CLUSTER_READ
-
+;
 ;***Test FBP *******************************************************************
-    lxi     h,StringPat
-    push    h
-    call    FAT_FBP
-    pop     psw
-    mvi     a,$08
-    call    BCDSEG7
-    cma
-    out     DISP_PORT
+;    lxi     h,StringPat
+;    push    h
+;    call    FAT_FBP
+;    pop     psw
+;    mvi     a,$08
+;    call    BCDSEG7
+;    cma
+;    out     DISP_PORT
 ;*******************************************************************************
-
+;
 ;    call    FAT_SPR
 ;;Загрузка адреса строки
 ;    lxi     h,String_Name
@@ -304,17 +335,195 @@ W25_Test:
 ;;Выгружаем номер первого кластера найденного файла/субдиректории
 ;    pop     h
 ;    shld    SYSCELL_FAT_POINTER
+;
+;    lhld    SYSCELL_FAT_POINTER
+;    push    h
+;    lxi     h,$9000
+;    push    h
+;    call    DISK_CLUSTER_READ
+;    lda     $8010
+;    cpi     $CF
+;    rz
+;    lxi     h,$0008     ;начальный кластер программы
+;    push    h
+;    lxi     h,$1000
+;    push    h
+;    call    DISK_CLUSTER_READ
+
+;    lda     $8001
+;    cpi     $CF
+;    jz      otladka
+;    mvi     a,$CF
+;    sta     $8001
+;    
+;    call    SYS_CreateNewProcess
+     
+;    lhld    SYSCELL_SAP_STARTADDR
+;    lxi     d,$0020
+;    dad     d
+;    push    h
+;    ldhi    SYSPA_RETADDR
+;    lxi     h,$3000
+;    shlx
+;    pop     h
+;    push    h
+;    ldhi    SYSPA_SP_REG
+;    lxi     h,$3FFF
+;    shlx
+;    pop     h
+;    push    h
+;    ldhi    SYSPA_TA_01
+;    mvi     a,$03
+;    stax    d
+;    inx     d
+;    mvi     a,$33
+;    stax    d
+;    inx     d
+;    mvi     a,$33
+;    stax    d
+;    inx     d
+;    mvi     a,$33
+;    stax    d
+;    inx     d
+;    mvi     a,$33
+;    stax    d
+;    inx     d
+;    mvi     a,$33
+;    stax    d
+;    inx     d
+;    mvi     a,$33
+;    stax    d
+;    inx     d
+;    mvi     a,$3F
+;    stax    d
     
+    ;Необходимо завершить тесты. Панелька ПЗУ на плате сломалась. Вселенская подстава не хочет, чтобы я написал эту функцию, но я должен ее написать
     
-    lhld    SYSCELL_FAT_POINTER
-    push    h
-    lxi     h,$9000
-    push    h
-    call    DISK_CLUSTER_READ
+;    pop     h
+    
+otladka:
+    mvi     a,$CD
+    sta     $3000
+    mvi     a,$67
+    sta     $3001
+    mvi     a,$F0
+    sta     $3002
+    mvi     a,$C3
+    sta     $3003
+    mvi     a,$00
+    sta     $3004
+    mvi     a,$30
+    sta     $3005
+    
     ret
 
 
 StringPat:
 .db $10
-.ds 'SUBDIR2/UWFB.BIN'
+.ds 'SUBDIR1/UWFB.BIN'
 
+
+;Создать новый процесс
+SYS_CreateNewProcess:    
+;(1) Инкремент количества процессов
+    lda     SYSCELL_NUM_OF_PROC
+    mov     e,a
+    inr     a
+    sta     SYSCELL_NUM_OF_PROC
+;(2) Получение начального адреса дескриптора нового процесса
+    xra     a
+    mov     d,a
+    rdel
+    rdel
+    rdel
+    rdel
+    rdel
+    lhld    SYSCELL_SAP_STARTADDR
+    dad     d
+    push    h
+;(3) Вычислить ID как max(IDs)+1
+    mvi     m,$03
+;(4) Установка статуса
+    pop     h
+    push    h
+    ldhi    SYSPA_STATUS_0
+    mvi     a,$85
+    stax    d
+    inx     d
+    mvi     a,$00
+    stax    d
+;(5) Установка таблицы ассоциаций
+    mvi     a,$03   ;здесь должна быть система выбора свободного сектора
+    ;
+    mov     b,a
+    rlc
+    rlc
+    rlc
+    rlc
+    add     b
+    pop     h
+    push    h
+    ldhi    SYSPA_TA_01
+;Все виртуальные сектора кроме E и F заполнить одним значением
+    mvi     c,$07
+sys_cnp_cycle:
+    stax    d
+    inx     d
+    dcr     c
+    jnz     sys_cnp_cycle
+;Виртуальные E и F должны совпадать с реальными
+    mvi     a,$EF
+    stax    d
+;(6) Установка PC, SP
+    pop     h
+    push    h
+    ldhi    SYSPA_RETADDR
+    ;
+    mvi     a,$03   ;здесь должна быть система выбора свободного сектора
+    ;
+    rlc
+    rlc
+    rlc
+    rlc
+    mov     h,a
+    mvi     l,$00
+    shlx
+    pop     h
+    push    h
+    ldhi    SYSPA_SP_REG
+    ori     $0F
+    mov     h,a
+    mvi     l,$FF
+    shlx
+;(7) Preparing register set
+    pop     h
+    push    h
+    ldhi    SYSPA_STACK_HL
+    lxi     h,$0000
+    shlx
+    inx     d
+    inx     d
+    shlx
+    inx     d
+    inx     d
+    shlx
+    inx     d
+    inx     d
+    shlx
+    
+    mvi     a,$CD
+    sta     $3000
+    mvi     a,$67
+    sta     $3001
+    mvi     a,$F0
+    sta     $3002
+    mvi     a,$C3
+    sta     $3003
+    mvi     a,$00
+    sta     $3004
+    mvi     a,$30
+    sta     $3005
+    
+;(7) Возврат
+    pop     h
+    ret
