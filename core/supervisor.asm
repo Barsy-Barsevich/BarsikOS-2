@@ -124,7 +124,7 @@ planner_m1:
 ;SYSPA_STATUS_STATUS_MASK. Если равны SYSPA_PROC_COMPLETED, то начальный
 ;процесс завершен, а значит, вторичный может начинать работу. Если не равен
 ;SYSPA_PROC_COMPLETED, переход к planner_change_proc. Если процесс с нужным ID
-;не найден, переход к planner_change_proc.
+;не найден, запуск ждущего процесса(v2.20) /переход к planner_change_proc(v2.19)
 ;Выделение байта ID первичного процесса
     lda     SYSCELL_NUM_OF_PROC
     mov     c,a                     ;C <- NUM_OF_PROC
@@ -140,7 +140,10 @@ planner_cycle:
     dad     d
     dcr     c
     jnz     planner_cycle
-    jmp     planner_change_proc
+;В версии v2.20 изменяется условие запуска ждущего процесса: если дескриптор
+;ожидаемого процесса не найден, то запуск ждущего процесса
+;    jmp     planner_change_proc  ;v2.19
+    jmp     planner_run_proc
 ;(6) Определить, выполнен первичный процесс или еще выполняется
 ;HL - указатель на САП первичного процесса
 planner_m2:
@@ -395,7 +398,7 @@ Hot_Start_OS:
 SAP_STARTADDR_ROM:
 ;--<1st process>----------------------------------------------------------------
 .db $00     ;SYSPA_ID =         $00
-.db $25     ;SYSPA_STATUS_0 =   $01
+.db $27     ;SYSPA_STATUS_0 =   $01
 .db $00     ;SYSPA_STATUS_1 =   $02
 ;Table of Assotiations
 .db $01     ;SYSPA_TA_01 =      $03
@@ -427,16 +430,16 @@ SAP_STARTADDR_ROM:
 .db $00     ;SYSPA_RES8 =       $1F
 ;--<2nd process>----------------------------------------------------------------
 .db $01     ;SYSPA_ID =         $00
-.db $85     ;SYSPA_STATUS =     $01
+.db $87     ;SYSPA_STATUS =     $01
 .db $00     ;SYSPA_STATUS2 =    $02
 ;Table of Assotiations
-.db $01     ;SYSPA_TA_01 =      $03
-.db $23     ;SYSPA_TA_23 =      $04
-.db $45     ;SYSPA_TA_45 =      $05
-.db $67     ;SYSPA_TA_67 =      $06
-.db $89     ;SYSPA_TA_89 =      $07
-.db $AB     ;SYSPA_TA_AB =      $08
-.db $CD     ;SYSPA_TA_CD =      $09
+.db $33     ;SYSPA_TA_01 =      $03
+.db $33     ;SYSPA_TA_23 =      $04
+.db $33     ;SYSPA_TA_45 =      $05
+.db $33     ;SYSPA_TA_67 =      $06
+.db $33     ;SYSPA_TA_89 =      $07
+.db $33     ;SYSPA_TA_AB =      $08
+.db $33     ;SYSPA_TA_CD =      $09
 .db $EF     ;SYSPA_TA_EF =      $0A
 ;Contains of stack
 .dw $0000   ;SYSPA_STACK_HL =   $0B
@@ -444,9 +447,9 @@ SAP_STARTADDR_ROM:
 .dw $0000   ;SYSPA_STACK_BC =   $0F
 .dw $0000   ;SYSPA_STACK_PSW =  $11
 ;Return address
-.dw process1   ;SYSPA_RETADDR =    $13
+.dw $3000   ;process1   ;SYSPA_RETADDR =    $13
 ;Stack Pointer value
-.dw $2FFF   ;SYSPA_SP_REG
+.dw $3FFF   ;SYSPA_SP_REG
 ;Зарезервированные байты
 .db $00     ;SYSPA_RES0 =       $17
 .db $00     ;SYSPA_RES1 =       $18
@@ -470,67 +473,63 @@ SAP_STARTADDR_ROM:
 
 
 process0:
-    ;lda     $8010
-    ;inr     a
-    ;sta     $8010
-    ;call    Function
-    ;call    W25_Test
-    
-    ;call    Read_Time
-    ;lxi     h,$03E8
-    ;call    Delay_ms_6
-    ;lda     $8010
-    ;dcr     a
-    ;sta     $8010
-    ;jnz     process0
-    ;mvi     a,40H
-    ;sim
-    ;mvi     a,C0H
-    ;sim
-    
-    call    W25_Test
-    call    ST7920_INI
-    call    GR_INI
-;Установка таблицы шрифтов
-    lxi     h,$9000
-    push    h
-    call    GR_FONT
-    pop     h
-;Установка начального адреса видеобуфера
-    lxi     h,$C800
-    push    h
-    call    GR_START_BUF_ADDR
-    pop     h
-;Очистка видеобуфера, печать туда текста
-    call    ST7920_BUF_CLR
-    lxi     h,string_test
-    push    h
-    lxi     h,$0018
-    push    h
-    lxi     h,$0000
-    push    h
-    call    GR_STOPT
-    pop     h
-    pop     h
-    pop     h
-    lxi     h,$C800
-    mvi     m,$FF
-    inx     h
-    inx     h
-    mvi     m,$FF
-    call    ST7920_PRINT_BUF
-;Задержка
-    lxi     h,$01F4
+
+    lxi     h,$0500
     call    Delay_ms_6
+    call    W25_Test
     
+;    call    ST7920_INI
+;    call    GR_INI
+;;Установка таблицы шрифтов
+;    lxi     h,$9000
+;    push    h
+;    call    GR_FONT
+;    pop     h
+;;Установка начального адреса видеобуфера
+;    lxi     h,$C800
+;    push    h
+;    call    GR_START_BUF_ADDR
+;    pop     h
+;;Очистка видеобуфера, печать туда текста
+;    call    ST7920_BUF_CLR
+;    lxi     h,string_test
+;    push    h
+;    lxi     h,$000A
+;    push    h
+;    lxi     h,$0000
+;    push    h
+;    call    GR_STOPT
+;    pop     h
+;    pop     h
+;    pop     h
+;    call    ST7920_PRINT_BUF
+;;Задержка
+;    lxi     h,$01F4
+;    call    Delay_ms_6
+     
+    mvi     a,$40
+    sim
+    mvi     a,$C0
+    sim
+    nop
+    nop
+    nop
+    nop
+    nop
     jmp     process0
+    
+    
 
 process1:
     call    Read_Time
-    lxi     h,$01F4
-    call    Delay_ms_6
-    jmp     process1
+    jmp     $8330   ;process1
 
 string_test:
-.db $0E
-.ds 'BarsikOS-v2.18'
+.db $1C
+.ds '(E)'
+.db $20
+.ds 'Barsotion'
+.db $20
+.ds 'BarsikOS-v2.1'
+inc_metka:
+.ds '0'
