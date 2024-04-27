@@ -65,3 +65,5 @@
 .def GR_LINE =              $F0B5
 .def GR_CIRCLE =            $F0B8
 .def GR_FRAME =             $F0BB
+;
+.def SYS_User_muutos =      $F0BE
