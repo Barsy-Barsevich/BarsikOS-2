@@ -28,32 +28,35 @@ SYS_OS_muutos:
     nop
     ret
 
-; SYStemFS
-; Функция SYS_User_muutos - переход в режим пользователя
-; Ввод: нет
-; Вывод: нет
-; Используемые регистры: все
-; Используемые порты: таймер номер 2
-; Оценка: длина - 23 байта, время - 123 такта
-SYS_User_muutos:
-;Настройка таймера
-    mvi     a,B0H
-    out     TIMER_MODEREG
-    lhld    SYSCELL_QUANT_TIME
-    mov     a,l
-    out     TIMER_COUNTER_2
-    mov     a,h
-    out     TIMER_COUNTER_2
-; Включаем режим пользователя
-    mvi     a,40H
-    sim
-    mvi     a,C0H
-    sim
-    pop     h
-    pop     d
-    pop     b
-    pop     psw
-    ret
+
+;Подстава лютейшая, как же долго я ее искал
+;Эта функция должна быть в секторе F
+;; SYStemFS
+;; Функция SYS_User_muutos - переход в режим пользователя
+;; Ввод: нет
+;; Вывод: нет
+;; Используемые регистры: все
+;; Используемые порты: таймер номер 2
+;; Оценка: длина - 23 байта, время - 123 такта
+;SYS_User_muutos:
+;;Настройка таймера
+;    mvi     a,B0H
+;    out     TIMER_MODEREG
+;    lhld    SYSCELL_QUANT_TIME
+;    mov     a,l
+;    out     TIMER_COUNTER_2
+;    mov     a,h
+;    out     TIMER_COUNTER_2
+;; Включаем режим пользователя
+;    mvi     a,40H
+;    sim
+;    mvi     a,C0H
+;    sim
+;    pop     h
+;    pop     d
+;    pop     b
+;    pop     psw
+;    ret
 
 
 ; SYStemFS
@@ -100,6 +103,7 @@ sys_ta_write_1:
 ;Запись в банк
     in      SYSPORT_C
     ori     SYS_WB_BITMASK
+    ori     SYS_CLKE_BITMASK
     out     SYSPORT_C
     ldhi    SYSPA_TA_01
     mvi     c,$08
